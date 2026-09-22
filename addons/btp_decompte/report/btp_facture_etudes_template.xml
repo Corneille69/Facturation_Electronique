@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_facture_etudes_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <div class="article" style="font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 11px; color: #000; padding: 10px 15px; line-height: 1.35;">
+                    
+                    <!-- EN-TÊTE SUPÉRIEUR DU DOCUMENT (ENTETE CENTRÉ OU COORDONNÉES) -->
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 6px;">
+                        <tr>
+                            <td style="width: 20%; vertical-align: middle; text-align: left;">
+                                <img t-if="o.company_id.logo" t-att-src="image_data_uri(o.company_id.logo)" style="max-height: 60px; max-width: 140px;" alt="Logo"/>
+                            </td>
+                            <td style="width: 60%; vertical-align: middle; text-align: center;">
+                                <div style="font-size: 14px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase;">
+                                    <t t-if="o.company_id.name"><t t-esc="o.company_id.name"/></t>
+                                    <t t-else="">ENTETE</t>
+                                </div>
+                                <div style="font-size: 9.5px; color: #333; margin-top: 2px;">
+                                    <t t-if="o.company_id.street"><t t-esc="o.company_id.street"/>, </t>
+                                    <t t-if="o.company_id.city"><t t-esc="o.company_id.city"/> - </t>
+                                    <t t-if="o.company_id.phone">Tél : <t t-esc="o.company_id.phone"/> | </t>
+                                    <t t-if="o.company_id.email">Email : <t t-esc="o.company_id.email"/></t>
+                                </div>
+                                <div t-if="o.company_id.ifu or o.company_id.vat" style="font-size: 9px; color: #444;">
+                                    <strong>IFU : </strong><t t-esc="o.company_id.ifu or o.company_id.vat"/>
+                                    <t t-if="o.company_id.rccm"> | <strong>RCCM : </strong><t t-esc="o.company_id.rccm"/></t>
+                                </div>
+                            </td>
+                            <td style="width: 20%; text-align: right; vertical-align: middle;">
+                                <img t-if="o.qr_code_image" t-att-src="'data:image/png;base64,%s' % o.qr_code_image.decode('utf-8')" style="width: 55px; height: 55px; border: 1px solid #333; padding: 2px;" alt="QR Code"/>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div style="border-bottom: 1px solid #666; margin-bottom: 12px;"></div>
+
+                    <!-- LIEU ET DATE (EN HAUT À DROITE COMME SUR LA PHOTO) -->
+                    <div style="text-align: right; font-size: 11.5px; margin-bottom: 15px; margin-right: 5px;">
+                        <span style="font-weight: 500;">
+                            <t t-esc="o.etude_city or o.facture_city or 'Ouagadougou'"/> le : 
+                            <strong><t t-esc="(o.invoice_date or datetime.date.today()).strftime('%d/%m/%Y')"/></strong>
+                        </span>
+                    </div>
+
+                    <!-- FACTURE N° (CENTRÉ ET SOULIGNÉ COMME SUR LA PHOTO) -->
+                    <div style="text-align: center; margin-bottom: 16px;">
+                        <span style="font-size: 15px; font-weight: bold; text-transform: uppercase; text-decoration: underline; letter-spacing: 0.5px;">
+                            FACTURE N° : <t t-esc="o.name or o.ref or '......................................'"/>
+                        </span>
+                    </div>
+
+                    <!-- INFORMATIONS DE LA FACTURE (BLOC GAUCHE AVEC INTITULÉS SOULIGNÉS EXACTEMENT COMME SUR LA PHOTO) -->
+                    <div style="margin-bottom: 15px; font-size: 11.5px; line-height: 1.6;">
+                        <div>
+                            <strong style="text-decoration: underline;">Doit :</strong>
+                            <span style="margin-left: 8px; font-weight: bold; text-transform: uppercase;">
+                                <t t-esc="o.partner_id.name or '..................................................................'"/>
+                            </span>
+                            <t t-if="o.partner_id.street">
+                                <span style="font-size: 10.5px; font-weight: normal;"> - <t t-esc="o.partner_id.street"/></span>
+                            </t>
+                            <t t-if="o.partner_id.vat">
+                                <span style="font-size: 10.5px; font-weight: normal;"> (IFU : <t t-esc="o.partner_id.vat"/>)</span>
+                            </t>
+                        </div>
+                        <div style="margin-top: 3px;">
+                            <strong style="text-decoration: underline;">OBJET :</strong>
+                            <span style="margin-left: 8px; font-weight: 500;">
+                                <t t-esc="o.etude_objet or o.ref or 'Études et Prestations d’ingénierie selon bordereau'"/>
+                            </span>
+                        </div>
+                        <div style="margin-top: 3px;">
+                            <strong style="text-decoration: underline;">Marché N° :</strong>
+                            <span style="margin-left: 8px;">
+                                <t t-esc="o.etude_marche_num or '..................................................................'"/>
+                            </span>
+                        </div>
+                        <div style="margin-top: 3px;">
+                            <strong style="text-decoration: underline;">Montant du Marché :</strong>
+                            <span style="margin-left: 8px; font-weight: 500;">
+                                <t t-if="o.etude_marche_montant">
+                                    <t t-esc="o.format_monetary_value(o.etude_marche_montant)"/> <t t-esc="o.currency_id.symbol or 'FCFA'"/>
+                                </t>
+                                <t t-else="">..................................................................</t>
+                            </span>
+                        </div>
+                        <div style="margin-top: 3px;">
+                            <strong style="text-decoration: underline;">Financement :</strong>
+                            <span style="margin-left: 8px;">
+                                <t t-esc="o.etude_financement or '..................................................................'"/>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- TABLEAU PRINCIPAL (LES 6 COLONNES ET LES 3 SECTIONS DE LA PHOTO) -->
+                    <table style="width: 100%; border-collapse: collapse; border: 2px solid #000; font-size: 10.5px; margin-bottom: 10px;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid #000; font-weight: bold; text-align: center; background-color: #ffffff;">
+                                <th style="border: 1px solid #000; width: 6%; padding: 6px 3px;">N°</th>
+                                <th style="border: 1px solid #000; width: 44%; padding: 6px 6px; text-align: left;">DESIGNATIONS</th>
+                                <th style="border: 1px solid #000; width: 10%; padding: 6px 3px;">UNITE</th>
+                                <th style="border: 1px solid #000; width: 10%; padding: 6px 3px;">QUANTITE</th>
+                                <th style="border: 1px solid #000; width: 15%; padding: 6px 4px;">PRIX UNITAIRE</th>
+                                <th style="border: 1px solid #000; width: 15%; padding: 6px 4px;">PRIX TOTAL</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- ================= SECTION I : HONORAIRES ================= -->
+                            <tr style="border: 1.5px solid #000; background-color: #f2f2f2; font-weight: bold;">
+                                <td style="border: 1px solid #000; text-align: center; padding: 5px 3px;">I</td>
+                                <td colspan="5" style="border: 1px solid #000; padding: 5px 6px; text-transform: uppercase;">HONORAIRES</td>
+                            </tr>
+                            <t t-foreach="o.etude_line_ids.filtered(lambda l: l.section == 'section_1')" t-as="l">
+                                <tr style="border: 1px solid #000;">
+                                    <td style="border: 1px solid #000; text-align: center; padding: 5px 3px;"><t t-esc="l.line_number or ''"/></td>
+                                    <td style="border: 1px solid #000; padding: 5px 6px;"><t t-esc="l.name"/></td>
+                                    <td style="border: 1px solid #000; text-align: center; padding: 5px 3px;"><t t-esc="l.unite or ''"/></td>
+                                    <td style="border: 1px solid #000; text-align: center; padding: 5px 3px;"><t t-esc="('%g' % l.quantity) if l.quantity else '0'"/></td>
+                                    <td style="border: 1px solid #000; text-align: right; padding: 5px 6px;"><t t-esc="o.format_monetary_value(l.price_unit)"/></td>
+                                    <td style="border: 1px solid #000; text-align: right; padding: 5px 6px; font-weight: bold;"><t t-esc="o.format_monetary_value(l.price_total)"/></td>
+                                </tr>
+                            </t>
+                            <!-- SOUS TOTAL I -->
+                            <tr style="border: 1.5px solid #000; font-weight: bold; background-color: #ffffff;">
+                                <td colspan="5" style="border: 1px solid #000; text-align: right; padding: 6px 12px; font-weight: bold; letter-spacing: 0.5px;">SOUS TOTAL I</td>
+                                <td style="border: 1px solid #000; text-align: right; padding: 6px 6px; font-weight: bold;"><t t-esc="o.format_monetary_value(o.etude_sous_total_1)"/></td>
+                            </tr>
+
+                            <!-- ================= SECTION II : FRAIS REMBOURSABLE ================= -->
+                            <tr style="border: 1.5px solid #000; background-color: #f2f2f2; font-weight: bold;">
+                                <td style="border: 1px solid #000; text-align: center; padding: 5px 3px;">II</td>
+                                <td colspan="5" style="border: 1px solid #000; padding: 5px 6px; text-transform: uppercase;">FRAIS REMBOURSABLE</td>
+                            </tr>
+                            <t t-foreach="o.etude_line_ids.filtered(lambda l: l.section == 'section_2')" t-as="l">
+                                <tr style="border: 1px solid #000;">
+                                    <td style="border: 1px solid #000; text-align: center; padding: 5px 3px;"><t t-esc="l.line_number or ''"/></td>
+                                    <td style="border: 1px solid #000; padding: 5px 6px;"><t t-esc="l.name"/></td>
+                                    <td style="border: 1px solid #000; text-align: center; padding: 5px 3px;"><t t-esc="l.unite or ''"/></td>
+                                    <td style="border: 1px solid #000; text-align: center; padding: 5px 3px;"><t t-esc="('%g' % l.quantity) if l.quantity else '0'"/></td>
+                                    <td style="border: 1px solid #000; text-align: right; padding: 5px 6px;"><t t-esc="o.format_monetary_value(l.price_unit)"/></td>
+                                    <td style="border: 1px solid #000; text-align: right; padding: 5px 6px; font-weight: bold;"><t t-esc="o.format_monetary_value(l.price_total)"/></td>
+                                </tr>
+                            </t>
+                            <!-- SOUS TOTAL II -->
+                            <tr style="border: 1.5px solid #000; font-weight: bold; background-color: #ffffff;">
+                                <td colspan="5" style="border: 1px solid #000; text-align: right; padding: 6px 12px; font-weight: bold; letter-spacing: 0.5px;">SOUS TOTAL II</td>
+                                <td style="border: 1px solid #000; text-align: right; padding: 6px 6px; font-weight: bold;"><t t-esc="o.format_monetary_value(o.etude_sous_total_2)"/></td>
+                            </tr>
+
+                            <!-- ================= SECTION III : FRAIS DIVERS ================= -->
+                            <tr style="border: 1.5px solid #000; background-color: #f2f2f2; font-weight: bold;">
+                                <td style="border: 1px solid #000; text-align: center; padding: 5px 3px;">III</td>
+                                <td colspan="5" style="border: 1px solid #000; padding: 5px 6px; text-transform: uppercase;">FRAIS DIVERS</td>
+                            </tr>
+                            <t t-foreach="o.etude_line_ids.filtered(lambda l: l.section == 'section_3')" t-as="l">
+                                <tr style="border: 1px solid #000;">
+                                    <td style="border: 1px solid #000; text-align: center; padding: 5px 3px;"><t t-esc="l.line_number or ''"/></td>
+                                    <td style="border: 1px solid #000; padding: 5px 6px;"><t t-esc="l.name"/></td>
+                                    <td style="border: 1px solid #000; text-align: center; padding: 5px 3px;"><t t-esc="l.unite or ''"/></td>
+                                    <td style="border: 1px solid #000; text-align: center; padding: 5px 3px;"><t t-esc="('%g' % l.quantity) if l.quantity else '0'"/></td>
+                                    <td style="border: 1px solid #000; text-align: right; padding: 5px 6px;"><t t-esc="o.format_monetary_value(l.price_unit)"/></td>
+                                    <td style="border: 1px solid #000; text-align: right; padding: 5px 6px; font-weight: bold;"><t t-esc="o.format_monetary_value(l.price_total)"/></td>
+                                </tr>
+                            </t>
+                            <!-- SOUS TOTAL III -->
+                            <tr style="border: 1.5px solid #000; font-weight: bold; background-color: #ffffff;">
+                                <td colspan="5" style="border: 1px solid #000; text-align: right; padding: 6px 12px; font-weight: bold; letter-spacing: 0.5px;">SOUS TOTAL III</td>
+                                <td style="border: 1px solid #000; text-align: right; padding: 6px 6px; font-weight: bold;"><t t-esc="o.format_monetary_value(o.etude_sous_total_3)"/></td>
+                            </tr>
+
+                            <!-- ================= TOTAUX GÉNÉRAUX ================= -->
+                            <!-- TOTAL GENERAL HTVA -->
+                            <tr style="border: 1.5px solid #000; font-weight: bold; background-color: #ffffff;">
+                                <td colspan="5" style="border: 1px solid #000; padding: 6px 8px; text-transform: uppercase; font-weight: bold;">TOTAL GENERAL HVTA</td>
+                                <td style="border: 1px solid #000; text-align: right; padding: 6px 6px; font-weight: bold;"><t t-esc="o.format_monetary_value(o.etude_total_htva)"/></td>
+                            </tr>
+
+                            <!-- TVA 18% -->
+                            <tr style="border: 1px solid #000; font-weight: 500;">
+                                <td colspan="5" style="border: 1px solid #000; padding: 5px 8px;">TVA 18%</td>
+                                <td style="border: 1px solid #000; text-align: right; padding: 5px 6px;"><t t-esc="o.format_monetary_value(o.etude_total_tva)"/></td>
+                            </tr>
+
+                            <!-- MONTANT NET A PAYER -->
+                            <tr style="border: 2px solid #000; font-weight: bold; font-size: 11.5px; background-color: #f9f9f9;">
+                                <td colspan="5" style="border: 2px solid #000; padding: 7px 8px; text-transform: uppercase; font-weight: bold;">MONTANT NET A PAYER</td>
+                                <td style="border: 2px solid #000; text-align: right; padding: 7px 6px; font-weight: bold;"><t t-esc="o.format_monetary_value(o.etude_net_a_payer)"/></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- ARRÊTEZ LA PRÉSENTE FACTURE A LA SOMME DE (EN TOUTES LETTRES) -->
+                    <div style="margin-top: 10px; margin-bottom: 35px; font-size: 11.5px; line-height: 1.5;">
+                        <span>Arretez la présente facture a la somme de :</span>
+                        <span style="font-weight: bold; text-transform: uppercase; margin-left: 5px;">
+                            <t t-esc="o.etude_net_lettres or ''"/>
+                        </span>
+                    </div>
+
+                    <!-- BLOC LE BUREAU (ALIGNÉ COMME SUR LA PHOTO) -->
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                        <tr>
+                            <td style="width: 15%;"></td>
+                            <td style="width: 40%; text-align: center; vertical-align: top;">
+                                <div style="font-weight: bold; font-size: 12px; text-decoration: underline; margin-bottom: 60px;">
+                                    <t t-esc="o.etude_signataire_titre or 'Le Bureau'"/>
+                                </div>
+                                <div t-if="o.etude_signataire_nom" style="font-weight: bold; font-size: 11px;">
+                                    <t t-esc="o.etude_signataire_nom"/>
+                                </div>
+                            </td>
+                            <td style="width: 45%;"></td>
+                        </tr>
+                    </table>
+
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <!-- Redirection automatique de l'impression standard Facture Odoo vers le template Études -->
+    <template id="report_invoice_inherit_etudes" inherit_id="account.report_invoice">
+        <xpath expr="//t[@t-call='account.report_invoice_document']" position="before">
+            <t t-if="o.facture_modele_code == 'honoraires_etudes'" t-call="btp_decompte.report_facture_etudes_document" t-lang="lang">
+                <t t-set="docs" t-value="o"/>
+            </t>
+        </xpath>
+    </template>
+</odoo>

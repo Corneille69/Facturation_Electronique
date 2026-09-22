@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Action Impression Facture Modèle BTP — Honoraires / Études -->
+    <record id="action_report_facture_etudes" model="ir.actions.report">
+        <field name="name">Facture BTP (Honoraires / Études)</field>
+        <field name="model">account.move</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">btp_decompte.report_facture_etudes_document</field>
+        <field name="report_file">btp_decompte.report_facture_etudes_document</field>
+        <field name="print_report_name">'Facture_Etudes_%s' % (object.name or 'BTP')</field>
+        <field name="paperformat_id" ref="paperformat_btp_facture"/>
+        <field name="binding_model_id" ref="account.model_account_move"/>
+        <field name="binding_type">report</field>
+    </record>
+</odoo>

@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Extension de la vue formulaire Facture pour le modèle BTP — Honoraires / Études -->
+    <record id="view_move_form_inherit_etudes" model="ir.ui.view">
+        <field name="name">account.move.form.inherit.etudes</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="priority">40</field>
+        <field name="arch" type="xml">
+            
+            <!-- 1. BOUTONS DANS L'EN-TÊTE -->
+            <xpath expr="//header" position="inside">
+                <button name="action_print_facture_etudes"
+                        string="Imprimer Facture Études (PDF)"
+                        type="object"
+                        class="btn-primary fw-bold"
+                        icon="fa-print"
+                        invisible="facture_modele_code != 'honoraires_etudes'"/>
+                <button name="action_init_default_etude_lines"
+                        string="Charger les 10 Lignes Types"
+                        type="object"
+                        class="btn-secondary"
+                        icon="fa-list-ol"
+                        invisible="facture_modele_code != 'honoraires_etudes'"/>
+            </xpath>
+
+            <!-- 2. MASQUER L'ONGLET BORDEREAU QUAND LE MODÈLE ÉTUDES EST CHOISI -->
+            <xpath expr="//page[@name='facture_modele_page']" position="attributes">
+                <attribute name="invisible">decompte_id or petit_marche_id or facture_modele_code in ('honoraires_consultant', 'honoraires_etudes')</attribute>
+            </xpath>
+
+            <!-- 3. NOUVEL ONGLET DÉDIÉ : FACTURE BTP — HONORAIRES / ÉTUDES -->
+            <xpath expr="//page[@id='invoice_tab']" position="before">
+                <page string="Facture BTP — Honoraires / Études" 
+                      name="facture_etudes_page" 
+                      invisible="facture_modele_code != 'honoraires_etudes'">
+                    
+                    <div class="row">
+                        
+                        <!-- VOLET GAUCHE (4 COLONNES) : SÉLECTION & PRÉVISUALISATION VISUELLE -->
+                        <div class="col-md-4 border-end pe-3">
+                            <div class="alert alert-dark py-2 px-3 mb-3 text-white" style="background-color: #1b4f72;" role="status">
+                                <strong><i class="fa fa-folder-open-o me-1" title="Modèle"/> Modèle BTP — Honoraires / Études</strong><br/>
+                                <span class="small text-light">Facture officielle avec les 3 sections (Honoraires, Frais remboursables, Frais divers), TVA 18% et arrêté.</span>
+                            </div>
+                            
+                            <group>
+                                <field name="facture_modele_id" options="{'no_create': True}" widget="many2one" string="Modèle Choisi"/>
+                            </group>
+
+                            <div class="text-center p-2 bg-light border rounded shadow-sm mt-2">
+                                <field name="facture_modele_image" widget="image" class="img-fluid rounded" style="max-height: 420px; object-fit: contain; width: 100%;" readonly="1"/>
+                            </div>
+                            <div class="text-muted small text-center mt-2 fst-italic">
+                                Rendu visuel officiel du document imprimé
+                            </div>
+
+                            <div class="card mt-3 border-0 bg-light shadow-sm">
+                                <div class="card-body p-3">
+                                    <h6 class="text-primary fw-bold mb-2">
+                                        <i class="fa fa-info-circle me-1" title="Guide"/> Guide d'utilisation
+                                    </h6>
+                                    <ol class="small ps-3 mb-0" style="line-height: 1.5;">
+                                        <li>Renseignez le client, l'objet, le <strong>Marché N°</strong> et le <strong>Financement</strong>.</li>
+                                        <li>Le tableau ci-contre contient les <strong>3 sections officielles</strong> :</li>
+                                        <ul>
+                                            <li><strong>Section I :</strong> Honoraires (Chef de mission, ingénieurs)</li>
+                                            <li><strong>Section II :</strong> Frais Remboursables</li>
+                                            <li><strong>Section III :</strong> Frais Divers</li>
+                                        </ul>
+                                        <li>Saisissez les <strong>quantités</strong> et <strong>prix unitaires</strong> : les totaux de lignes et les sous-totaux se calculent instantanément.</li>
+                                        <li>Le <strong>Total Général HTVA</strong>, la <strong>TVA 18%</strong> et le <strong>Net à Payer</strong> sont calculés automatiquement.</li>
+                                        <li>Cliquez sur <strong>« Imprimer Facture Études »</strong> pour générer le PDF conforme.</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- VOLET DROIT (8 COLONNES) : SAISIE DU MARCHÉ, LIGNES, TOTAUX & APERÇU -->
+                        <div class="col-md-8 ps-3">
+                            
+                            <!-- BLOC 1 : INFORMATIONS DU MARCHÉ & EN-TÊTE -->
+                            <div class="card mb-3 border-0 shadow-sm bg-light">
+                                <div class="card-header text-white fw-bold py-2" style="background-color: #21618c;">
+                                    <i class="fa fa-file-text me-2" title="Marché"/> Informations du Marché &amp; Facture
+                                </div>
+                                <div class="card-body py-2">
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <span class="small fw-bold text-dark">Marché N° :</span>
+                                            <field name="etude_marche_num" placeholder="Ex: N° 2026-045/MID/SG/DGI"/>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <span class="small fw-bold text-dark">Montant du Marché :</span>
+                                            <field name="etude_marche_montant" widget="monetary" options="{'currency_field': 'currency_id'}" placeholder="0.00"/>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <span class="small fw-bold text-dark">Financement :</span>
+                                            <field name="etude_financement" placeholder="Ex: Budget de l'État / BIDC"/>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <span class="small fw-bold text-dark">Ville :</span>
+                                            <field name="etude_city" placeholder="Ex: Ouagadougou"/>
+                                        </div>
+                                        <div class="col-12">
+                                            <span class="small fw-bold text-dark">OBJET DE LA PRESTATION / ÉTUDE :</span>
+                                            <field name="etude_objet" placeholder="Ex: ÉTUDES TECHNIQUES ET CONTRÔLE DES TRAVAUX D'AMÉNAGEMENT..." rows="2"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- BLOC 2 : TABLEAU DES LIGNES DES 3 SECTIONS -->
+                            <div class="card mb-3 border-primary shadow-sm">
+                                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-2">
+                                    <span class="fw-bold fs-6">
+                                        <i class="fa fa-table me-2" title="Tableau"/> Prestations par Section (I. Honoraires, II. Frais Remboursable, III. Frais Divers)
+                                    </span>
+                                    <button name="action_init_default_etude_lines"
+                                            string="Réinitialiser les 10 Lignes Types"
+                                            type="object"
+                                            class="btn btn-sm btn-light text-primary fw-bold"
+                                            icon="fa-refresh"/>
+                                </div>
+                                <div class="card-body p-2">
+                                    <field name="etude_line_ids" nolabel="1">
+                                        <tree editable="bottom" decoration-info="section == 'section_1'" decoration-warning="section == 'section_2'" decoration-success="section == 'section_3'">
+                                            <field name="sequence" widget="handle"/>
+                                            <field name="section" widget="badge"
+                                                   decoration-info="section == 'section_1'"
+                                                   decoration-warning="section == 'section_2'"
+                                                   decoration-success="section == 'section_3'"/>
+                                            <field name="line_number" string="N°" style="width: 8%;"/>
+                                            <field name="name" string="Désignation" style="width: 40%;"/>
+                                            <field name="unite" string="Unité" style="width: 10%;"/>
+                                            <field name="quantity" string="Quantité" style="width: 10%;"/>
+                                            <field name="price_unit" string="Prix Unitaire" widget="monetary" options="{'currency_field': 'currency_id'}" style="width: 15%;"/>
+                                            <field name="price_total" string="Prix Total" widget="monetary" options="{'currency_field': 'currency_id'}" style="width: 15%; font-weight: bold;"/>
+                                            <field name="currency_id" column_invisible="True"/>
+                                        </tree>
+                                    </field>
+                                </div>
+                            </div>
+
+                            <!-- BLOC 3 : SOUS-TOTAUX, TOTAL GÉNÉRAL HTVA, TVA 18% ET NET À PAYER -->
+                            <div class="card mb-3 border-dark shadow-sm">
+                                <div class="card-header bg-dark text-white fw-bold py-2">
+                                    <i class="fa fa-calculator me-2" title="Totaux"/> Récapitulatif des Sous-Totaux &amp; Totaux Généraux
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-2">
+                                        <!-- Sous-total I -->
+                                        <div class="col-md-4">
+                                            <div class="p-2 border rounded bg-light">
+                                                <small class="text-muted d-block fw-bold">SOUS TOTAL I (Honoraires) :</small>
+                                                <field name="etude_sous_total_1" widget="monetary" options="{'currency_field': 'currency_id'}" class="fw-bold fs-6 text-dark"/>
+                                            </div>
+                                        </div>
+                                        <!-- Sous-total II -->
+                                        <div class="col-md-4">
+                                            <div class="p-2 border rounded bg-light">
+                                                <small class="text-muted d-block fw-bold">SOUS TOTAL II (Frais Remb.) :</small>
+                                                <field name="etude_sous_total_2" widget="monetary" options="{'currency_field': 'currency_id'}" class="fw-bold fs-6 text-dark"/>
+                                            </div>
+                                        </div>
+                                        <!-- Sous-total III -->
+                                        <div class="col-md-4">
+                                            <div class="p-2 border rounded bg-light">
+                                                <small class="text-muted d-block fw-bold">SOUS TOTAL III (Frais Divers) :</small>
+                                                <field name="etude_sous_total_3" widget="monetary" options="{'currency_field': 'currency_id'}" class="fw-bold fs-6 text-dark"/>
+                                            </div>
+                                        </div>
+
+                                        <!-- TOTAL GENERAL HTVA -->
+                                        <div class="col-md-4 mt-2">
+                                            <div class="p-2 border border-2 border-primary rounded bg-white shadow-sm">
+                                                <small class="text-primary d-block fw-bold">TOTAL GENERAL HTVA :</small>
+                                                <field name="etude_total_htva" widget="monetary" options="{'currency_field': 'currency_id'}" class="fw-bold fs-5 text-primary"/>
+                                            </div>
+                                        </div>
+
+                                        <!-- TVA 18% -->
+                                        <div class="col-md-4 mt-2">
+                                            <div class="p-2 border border-2 border-secondary rounded bg-white shadow-sm">
+                                                <small class="text-secondary d-block fw-bold">TVA 18% :</small>
+                                                <field name="etude_total_tva" widget="monetary" options="{'currency_field': 'currency_id'}" class="fw-bold fs-5 text-secondary"/>
+                                            </div>
+                                        </div>
+
+                                        <!-- MONTANT NET A PAYER -->
+                                        <div class="col-md-4 mt-2">
+                                            <div class="p-2 border border-2 border-success rounded bg-success text-white shadow-sm">
+                                                <small class="text-white d-block fw-bold">MONTANT NET A PAYER :</small>
+                                                <field name="etude_net_a_payer" widget="monetary" options="{'currency_field': 'currency_id'}" class="fw-bold fs-4 text-white"/>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Arrêté en toutes lettres -->
+                                    <div class="p-2 mt-3 bg-light border rounded text-dark">
+                                        <span class="fw-bold"><i class="fa fa-font me-1" title="Lettres"/> Arretez la présente facture a la somme de : </span>
+                                        <field name="etude_net_lettres" class="fw-bold text-uppercase text-primary"/>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- BLOC 4 : APERÇU DIRECT DU DOCUMENT DU MODÈLE TEL QU'IMPRIMÉ -->
+                            <div class="mt-3">
+                                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                                    <h6 class="text-dark fw-bold mb-0">
+                                        <i class="fa fa-eye me-1" title="Aperçu"/> Aperçu Direct du Document Tel Qu'Imprimé
+                                    </h6>
+                                    <button name="action_print_facture_etudes" 
+                                            string="Imprimer la Facture (PDF)" 
+                                            type="object" 
+                                            class="btn btn-sm btn-primary fw-bold" 
+                                            icon="fa-print"/>
+                                </div>
+                                <field name="etude_preview_html" widget="html" readonly="1" nolabel="1"/>
+                            </div>
+
+                        </div>
+                    </div>
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+</odoo>

@@ -7,3 +7,5 @@ access_btp_petit_marche_user,btp.petit.marche.user,model_btp_petit_marche,group_
 access_btp_petit_marche_manager,btp.petit.marche.manager,model_btp_petit_marche,group_btp_manager,1,1,1,1
 access_btp_facture_modele_user,btp.facture.modele.user,model_btp_facture_modele,group_btp_user,1,1,1,0
 access_btp_facture_modele_manager,btp.facture.modele.manager,model_btp_facture_modele,group_btp_manager,1,1,1,1
+access_btp_facture_etude_line_user,btp.facture.etude.line.user,model_btp_facture_etude_line,group_btp_user,1,1,1,1
+access_btp_facture_etude_line_manager,btp.facture.etude.line.manager,model_btp_facture_etude_line,group_btp_manager,1,1,1,1
