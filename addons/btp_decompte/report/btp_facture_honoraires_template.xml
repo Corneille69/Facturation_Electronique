@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_facture_honoraires_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <div class="article" style="font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 11.5px; color: #000; padding: 10px 15px; line-height: 1.35;">
+                    
+                    <!-- EN-TÊTE DISCRET DE L'ENTREPRISE (SI CONFIGURÉ) -->
+                    <table t-if="o.company_id.logo or o.company_id.name" style="width: 100%; border-collapse: collapse; margin-bottom: 8px;">
+                        <tr>
+                            <td style="width: 20%; vertical-align: middle; text-align: left;">
+                                <img t-if="o.company_id.logo" t-att-src="image_data_uri(o.company_id.logo)" style="max-height: 60px; max-width: 140px;" alt="Logo"/>
+                            </td>
+                            <td style="width: 60%; vertical-align: middle; text-align: center;">
+                                <div style="font-size: 13px; font-weight: bold; text-transform: uppercase;">
+                                    <t t-esc="o.company_id.name"/>
+                                </div>
+                                <div style="font-size: 9.5px; color: #333;">
+                                    <t t-if="o.company_id.street"><t t-esc="o.company_id.street"/>, </t>
+                                    <t t-if="o.company_id.city"><t t-esc="o.company_id.city"/> - </t>
+                                    <t t-if="o.company_id.phone">Tél : <t t-esc="o.company_id.phone"/> | </t>
+                                    <t t-if="o.company_id.email">Email : <t t-esc="o.company_id.email"/></t>
+                                </div>
+                                <div t-if="o.company_id.ifu or o.company_id.vat" style="font-size: 9px; color: #444;">
+                                    <strong>IFU : </strong><t t-esc="o.company_id.ifu or o.company_id.vat"/>
+                                    <t t-if="o.company_id.rccm"> | <strong>RCCM : </strong><t t-esc="o.company_id.rccm"/></t>
+                                </div>
+                            </td>
+                            <td style="width: 20%; text-align: right; vertical-align: middle;">
+                                <img t-if="o.qr_code_image" t-att-src="'data:image/png;base64,%s' % o.qr_code_image.decode('utf-8')" style="width: 55px; height: 55px; border: 1px solid #333; padding: 2px;" alt="QR Code"/>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div t-if="o.company_id.logo or o.company_id.name" style="border-bottom: 1px solid #777; margin-bottom: 12px;"></div>
+
+                    <!-- LIEU ET DATE (EN HAUT À DROITE EXACTEMENT COMME SUR LA PHOTO) -->
+                    <div style="text-align: right; font-size: 12px; margin-bottom: 15px; margin-right: 5px;">
+                        <span style="font-weight: 500;">
+                            <t t-esc="o.honoraire_city or o.facture_city or 'Ouagadougou'"/> le : 
+                            <strong><t t-esc="(o.invoice_date or datetime.date.today()).strftime('%d/%m/%Y')"/></strong>
+                        </span>
+                    </div>
+
+                    <!-- TITRE DE LA FACTURE (CENTRÉ ET SOULIGNÉ COMME SUR LA PHOTO) -->
+                    <div style="text-align: center; margin-bottom: 18px;">
+                        <span style="font-size: 16px; font-weight: bold; text-transform: uppercase; text-decoration: underline; letter-spacing: 0.5px;">
+                            FACTURE N° : <t t-esc="o.name or o.ref or '.................................'"/>
+                        </span>
+                    </div>
+
+                    <!-- BLOC DOIT & OBJET (GAUCHE EXACTEMENT COMME SUR LA PHOTO) -->
+                    <div style="margin-bottom: 15px; font-size: 12px; line-height: 1.6;">
+                        <div>
+                            <strong style="text-decoration: underline;">Doit :</strong>
+                            <span style="margin-left: 10px; font-weight: bold; text-transform: uppercase;">
+                                <t t-esc="o.partner_id.name or '..................................................................'"/>
+                            </span>
+                            <t t-if="o.partner_id.street">
+                                <span style="font-size: 11px; font-weight: normal;"> - <t t-esc="o.partner_id.street"/></span>
+                            </t>
+                            <t t-if="o.partner_id.vat">
+                                <span style="font-size: 10.5px; font-weight: normal;"> (IFU : <t t-esc="o.partner_id.vat"/>)</span>
+                            </t>
+                        </div>
+                        <div style="margin-top: 4px;">
+                            <strong style="text-decoration: underline;">Objet :</strong>
+                            <span style="margin-left: 8px; font-weight: 500;">
+                                <t t-esc="o.honoraire_objet or o.ref or 'Prestation intellectuelle et honoraires de consultation'"/>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- TABLEAU PRINCIPAL (LES 6 COLONNES ET 10 LIGNES STRICTES DE LA PHOTO) -->
+                    <table style="width: 100%; border-collapse: collapse; border: 2px solid #000; font-size: 10.5px; margin-bottom: 10px;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid #000; font-weight: bold; text-align: center; background-color: #ffffff;">
+                                <th style="border: 1px solid #000; width: 6%; padding: 6px 3px;">N°</th>
+                                <th style="border: 1px solid #000; width: 44%; padding: 6px 6px; text-align: left;">Désignations</th>
+                                <th style="border: 1px solid #000; width: 10%; padding: 6px 3px;">Unité</th>
+                                <th style="border: 1px solid #000; width: 10%; padding: 6px 3px;">Quantité</th>
+                                <th style="border: 1px solid #000; width: 15%; padding: 6px 4px;">Prix unitaire<br/>TTC</th>
+                                <th style="border: 1px solid #000; width: 15%; padding: 6px 4px;">Montant TTC</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- LIGNE 1 : Honoraires des consultants -->
+                            <tr style="border: 1px solid #000;">
+                                <td style="border: 1px solid #000; text-align: center; padding: 5px 3px;">1</td>
+                                <td style="border: 1px solid #000; padding: 5px 6px;">Honoraires des consultants</td>
+                                <td style="border: 1px solid #000; text-align: center; padding: 5px 3px;">
+                                    <t t-esc="o.honoraire_unite or ''"/>
+                                </td>
+                                <td style="border: 1px solid #000; text-align: center; padding: 5px 3px;">
+                                    <t t-if="o.honoraire_quantite"><t t-esc="('%g' % o.honoraire_quantite)"/></t>
+                                </td>
+                                <td style="border: 1px solid #000; text-align: right; padding: 5px 6px;">
+                                    <t t-esc="o.format_monetary_value(o.honoraire_line_1_montant)"/>
+                                </td>
+                                <td style="border: 1px solid #000; text-align: right; padding: 5px 6px; font-weight: bold;">
+                                    <t t-esc="o.format_monetary_value(o.honoraire_line_1_montant)"/>
+                                </td>
+                            </tr>
+
+                            <!-- LIGNE 2 : Frais Remboursable -->
+                            <tr style="border: 1px solid #000;">
+                                <td style="border: 1px solid #000; text-align: center; padding: 5px 3px;">2</td>
+                                <td style="border: 1px solid #000; padding: 5px 6px;">
+                                    Frais Remboursable<br/>
+                                    (déplacements, hébergements, rapports et communications 100%)
+                                </td>
+                                <td style="border: 1px solid #000; text-align: center; padding: 5px 3px;">
+                                    <t t-esc="o.honoraire_unite or ''"/>
+                                </td>
+                                <td style="border: 1px solid #000; text-align: center; padding: 5px 3px;">
+                                    <t t-if="o.honoraire_quantite"><t t-esc="('%g' % o.honoraire_quantite)"/></t>
+                                </td>
+                                <td style="border: 1px solid #000; text-align: right; padding: 5px 6px;">
+                                    <t t-esc="o.format_monetary_value(o.honoraire_line_2_montant)"/>
+                                </td>
+                                <td style="border: 1px solid #000; text-align: right; padding: 5px 6px; font-weight: bold;">
+                                    <t t-esc="o.format_monetary_value(o.honoraire_line_2_montant)"/>
+                                </td>
+                            </tr>
+
+                            <!-- LIGNE 3 : Montant total de la prestation -->
+                            <tr style="border: 1.5px solid #000; font-weight: bold;">
+                                <td style="border: 1px solid #000; text-align: center; padding: 6px 3px;">3</td>
+                                <td style="border: 1px solid #000; padding: 6px 6px; font-weight: bold;">Montant total de la prestation</td>
+                                <td style="border: 1px solid #000;"></td>
+                                <td style="border: 1px solid #000;"></td>
+                                <td style="border: 1px solid #000;"></td>
+                                <td style="border: 1px solid #000; text-align: right; padding: 6px 6px; font-weight: bold;">
+                                    <t t-esc="o.format_monetary_value(o.honoraire_line_3_total_prestation)"/>
+                                </td>
+                            </tr>
+
+                            <!-- LIGNE 4 : Paiement 1ere tranche (Avance 30% Honoraire) -->
+                            <tr style="border: 1px solid #000;">
+                                <td style="border: 1px solid #000; text-align: center; padding: 5px 3px;">4</td>
+                                <td style="border: 1px solid #000; padding: 5px 6px;">
+                                    Paiement 1ere tranche<br/>
+                                    (Avance <t t-esc="('%g' % o.honoraire_taux_tranche_1)"/>% Honoraire)
+                                </td>
+                                <td style="border: 1px solid #000;"></td>
+                                <td style="border: 1px solid #000;"></td>
+                                <td style="border: 1px solid #000;"></td>
+                                <td style="border: 1px solid #000; text-align: right; padding: 5px 6px;">
+                                    <t t-esc="o.format_monetary_value(o.honoraire_line_4_tranche_1_honoraire)"/>
+                                </td>
+                            </tr>
+
+                            <!-- LIGNE 5 : Paiement 1ere tranche (100% Frais remboursable) -->
+                            <tr style="border: 1px solid #000;">
+                                <td style="border: 1px solid #000; text-align: center; padding: 5px 3px;">5</td>
+                                <td style="border: 1px solid #000; padding: 5px 6px;">
+                                    Paiement 1ere tranche (100% Frais remboursable)
+                                </td>
+                                <td style="border: 1px solid #000;"></td>
+                                <td style="border: 1px solid #000;"></td>
+                                <td style="border: 1px solid #000;"></td>
+                                <td style="border: 1px solid #000; text-align: right; padding: 5px 6px;">
+                                    <t t-esc="o.format_monetary_value(o.honoraire_line_5_tranche_1_frais)"/>
+                                </td>
+                            </tr>
+
+                            <!-- LIGNE 6 : Total règlement 1ere Tranche -->
+                            <tr style="border: 1.5px solid #000; font-weight: bold;">
+                                <td style="border: 1px solid #000; text-align: center; padding: 6px 3px;">6</td>
+                                <td style="border: 1px solid #000; padding: 6px 6px; font-weight: bold;">Total règlement 1ere Tranche</td>
+                                <td style="border: 1px solid #000;"></td>
+                                <td style="border: 1px solid #000;"></td>
+                                <td style="border: 1px solid #000;"></td>
+                                <td style="border: 1px solid #000; text-align: right; padding: 6px 6px; font-weight: bold;">
+                                    <t t-esc="o.format_monetary_value(o.honoraire_line_6_total_tranche_1)"/>
+                                </td>
+                            </tr>
+
+                            <!-- LIGNE 7 : Paiement 2 ème Tranche 30%Honoraire -->
+                            <tr style="border: 1px solid #000;">
+                                <td style="border: 1px solid #000; text-align: center; padding: 5px 3px;">7</td>
+                                <td style="border: 1px solid #000; padding: 5px 6px;">
+                                    Paiement 2 ème Tranche<br/>
+                                    <t t-esc="('%g' % o.honoraire_taux_tranche_2)"/>%Honoraire (Après 50% de prestation exécutée)
+                                </td>
+                                <td style="border: 1px solid #000;"></td>
+                                <td style="border: 1px solid #000;"></td>
+                                <td style="border: 1px solid #000;"></td>
+                                <td style="border: 1px solid #000; text-align: right; padding: 5px 6px;">
+                                    <t t-esc="o.format_monetary_value(o.honoraire_line_7_tranche_2_honoraire)"/>
+                                </td>
+                            </tr>
+
+                            <!-- LIGNE 8 : Paiement 3 ème Tranche 40%Honoraire -->
+                            <tr style="border: 1px solid #000;">
+                                <td style="border: 1px solid #000; text-align: center; padding: 5px 3px;">8</td>
+                                <td style="border: 1px solid #000; padding: 5px 6px;">
+                                    Paiement 3 ème Tranche<br/>
+                                    <t t-esc="('%g' % o.honoraire_taux_tranche_3)"/>%Honoraire (Après 100% de prestation exécutée)
+                                </td>
+                                <td style="border: 1px solid #000;"></td>
+                                <td style="border: 1px solid #000;"></td>
+                                <td style="border: 1px solid #000;"></td>
+                                <td style="border: 1px solid #000; text-align: right; padding: 5px 6px;">
+                                    <t t-esc="o.format_monetary_value(o.honoraire_line_8_tranche_3_honoraire)"/>
+                                </td>
+                            </tr>
+
+                            <!-- LIGNE 9 : Retenue à la source (5% Tranche 1+2+3) -->
+                            <tr style="border: 1px solid #000;">
+                                <td style="border: 1px solid #000; text-align: center; padding: 5px 3px;">9</td>
+                                <td style="border: 1px solid #000; padding: 5px 6px;">
+                                    Retenue à la source (<t t-esc="('%g' % o.honoraire_taux_retenue)"/>% Tranche 1+2+3)
+                                </td>
+                                <td style="border: 1px solid #000;"></td>
+                                <td style="border: 1px solid #000;"></td>
+                                <td style="border: 1px solid #000;"></td>
+                                <td style="border: 1px solid #000; text-align: right; padding: 5px 6px;">
+                                    <t t-esc="o.format_monetary_value(o.honoraire_line_9_retenue_source)"/>
+                                </td>
+                            </tr>
+
+                            <!-- LIGNE 10 : Net à payer Tranche 2+3 (GRISÉ FONCÉ COMME SUR LA PHOTO) -->
+                            <tr style="border: 2px solid #000; background-color: #999999; color: #000; font-weight: bold;">
+                                <td style="border: 1.5px solid #000; text-align: center; padding: 7px 3px; font-size: 11px;">10</td>
+                                <td style="border: 1.5px solid #000; padding: 7px 6px; font-size: 11px;">Net à payer Tranche 2+3</td>
+                                <td style="border: 1.5px solid #000;"></td>
+                                <td style="border: 1.5px solid #000;"></td>
+                                <td style="border: 1.5px solid #000;"></td>
+                                <td style="border: 1.5px solid #000; text-align: right; padding: 7px 6px; font-size: 11.5px; font-weight: bold;">
+                                    <t t-esc="o.format_monetary_value(o.honoraire_line_10_net_a_payer)"/>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- ARRÊTÉE LA PRÉSENTE FACTURE À LA SOMME DE (EN TOUTES LETTRES) -->
+                    <div style="margin-top: 10px; margin-bottom: 35px; font-size: 11.5px; line-height: 1.5;">
+                        <span>Arrêtée la présente facture à la somme de :</span>
+                        <span style="font-weight: bold; text-transform: uppercase; margin-left: 5px;">
+                            <t t-esc="o.honoraire_net_lettres or ''"/>
+                        </span>
+                    </div>
+
+                    <!-- BLOC SIGNATAIRE (À DROITE EXACTEMENT COMME SUR LA PHOTO) -->
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                        <tr>
+                            <td style="width: 55%;"></td>
+                            <td style="width: 45%; text-align: center; vertical-align: top;">
+                                <div style="font-weight: bold; font-size: 12px; margin-bottom: 70px;">
+                                    <t t-esc="o.honoraire_signataire_titre or 'Signataire'"/>
+                                </div>
+                                <div style="font-weight: bold; text-decoration: underline; font-size: 12px;">
+                                    <t t-esc="o.honoraire_signataire_nom or 'Nom Prénoms'"/>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <!-- Redirection automatique de l'impression standard Facture Odoo vers le template Honoraires -->
+    <template id="report_invoice_inherit_honoraires" inherit_id="account.report_invoice">
+        <xpath expr="//t[@t-call='account.report_invoice_document']" position="before">
+            <t t-if="o.facture_modele_code == 'honoraires_consultant'" t-call="btp_decompte.report_facture_honoraires_document" t-lang="lang">
+                <t t-set="docs" t-value="o"/>
+            </t>
+        </xpath>
+    </template>
+</odoo>
