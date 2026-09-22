@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_petit_marche_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <div class="article" style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #000; padding: 10px 15px;">
+                    
+                    <!-- ================= EN-TÊTE SUPÉRIEUR (3 COLONNES) ================= -->
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 8px;">
+                        <tr>
+                            <!-- 1. GAUCHE : LOGO DE L'ENTREPRISE -->
+                            <td style="width: 25%; vertical-align: middle; text-align: left;">
+                                <img t-if="o.company_id.logo" t-att-src="image_data_uri(o.company_id.logo)" style="max-height: 80px; max-width: 160px;" alt="Logo"/>
+                            </td>
+
+                            <!-- 2. MILIEU : INFORMATIONS JURIDIQUES ET FISCALES -->
+                            <td style="width: 50%; vertical-align: middle; text-align: center;">
+                                <div style="font-size: 16px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    <t t-esc="o.company_id.name or 'MY COMPANY'"/>
+                                </div>
+                                <div style="font-size: 11px; color: #222; margin-bottom: 2px;">
+                                    (<t t-esc="o.company_id.country_id.name or 'Burkina Faso'"/>)
+                                </div>
+                                <div style="font-size: 10px; color: #111;">
+                                    <strong>Email :</strong> <t t-esc="o.company_id.email or 'contact@entreprise.com'"/>
+                                </div>
+                                <div style="font-size: 10px; color: #111;">
+                                    <strong>IFU :</strong> <t t-esc="o.company_id.ifu or o.company_id.vat or '00045678W'"/> |
+                                    <strong>RCCM :</strong> <t t-esc="o.company_id.rccm or o.company_id.company_registry or 'BF-OUA-01-2025-B12-00456'"/> |
+                                    <strong>ATI :</strong> <t t-esc="o.company_id.ati or 'ATI-BTP-2025/112'"/>
+                                </div>
+                                <div style="font-size: 9px; color: #333; margin-top: 1px;">
+                                    <strong>Régime fiscal :</strong> <t t-esc="o.company_id.regime_fiscal or 'Réel Normal d\'Imposition (RNI)'"/> |
+                                    <strong>Division fiscale :</strong> <t t-esc="o.company_id.division_fiscale or 'Direction des Grandes Entreprises (DGE)'"/>
+                                </div>
+                            </td>
+
+                            <!-- 3. DROITE : CODE QR DE CERTIFICATION ÉLECTRONIQUE -->
+                            <td style="width: 25%; vertical-align: middle; text-align: right;">
+                                <img t-if="o.qr_code_image" t-att-src="'data:image/png;base64,%s' % o.qr_code_image.decode('utf-8')" style="width: 80px; height: 80px; border: 1px solid #000; padding: 2px;" alt="QR Code"/>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- LIGNE DE SÉPARATION -->
+                    <div style="border-bottom: 1.5px solid #000; margin-bottom: 8px;"></div>
+
+                    <!-- ================= BANDEAU TITRE FACTURE (FOND BLEU-GRIS #9ab7d9) ================= -->
+                    <div style="background-color: #9ab7d9; border: 1px solid #000; padding: 5px; text-align: center; font-weight: bold; font-size: 13px; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">
+                        FACTURE D'AVANCE N° <t t-esc="o.invoice_ref or 'FACT-AVANCE'"/> - PETIT MARCHÉ : <t t-esc="o.name"/>
+                    </div>
+
+                    <!-- ================= CADRE INFORMATIONS MARCHÉ ET CLIENT ================= -->
+                    <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 10px; font-size: 10.5px;">
+                        <tr>
+                            <td style="width: 50%; border: 1px solid #000; padding: 4px 8px;">
+                                <strong>Facture N° :</strong> <t t-esc="o.invoice_ref or 'FACT-AVANCE'"/>
+                            </td>
+                            <td style="width: 50%; border: 1px solid #000; padding: 4px 8px;">
+                                <strong>Date :</strong> <span t-field="o.date" t-options='{"widget": "date"}'/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 4px 8px;">
+                                <strong>Référence du marché :</strong> <t t-esc="o.name"/>
+                            </td>
+                            <td style="border: 1px solid #000; padding: 4px 8px;">
+                                <strong>Client :</strong> <strong style="color: #0f2744;"><t t-esc="o.partner_id.name"/></strong>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="border: 1px solid #000; padding: 4px 8px;">
+                                <strong>Objet des travaux :</strong> <t t-esc="o.objet"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 4px 8px;">
+                                <strong>Statut :</strong> <span t-field="o.state"/>
+                            </td>
+                            <td style="border: 1px solid #000; padding: 4px 8px;">
+                                <strong>Facture Odoo associée :</strong> <t t-esc="o.move_id.name or 'En cours'"/>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- ================= TABLEAU FINANCIER COMPLET DES ÉLÉMENTS ================= -->
+                    <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; font-size: 10.5px; margin-bottom: 12px;">
+                        <thead>
+                            <tr style="border: 1px solid #000;">
+                                <th style="width: 68%; border: 1px solid #000; padding: 5px 8px; text-transform: uppercase; text-align: left; background-color: #f2f2f2;">
+                                    DÉSIGNATION DES ÉLÉMENTS DU MARCHÉ
+                                </th>
+                                <th style="width: 12%; border: 1px solid #000; padding: 5px 8px; text-align: center; background-color: #f2f2f2;">
+                                    TAUX / RÉF
+                                </th>
+                                <th style="width: 20%; border: 1px solid #000; padding: 5px 8px; text-align: right; background-color: #9ab7d9; font-weight: bold;">
+                                    EN <t t-esc="o.currency_id.symbol or 'FCFA'"/>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- 1. MONTANT TTC DU MARCHÉ -->
+                            <tr style="border: 1px solid #000; background-color: #fcfcfc;">
+                                <td style="border: 1px solid #000; padding: 5px 8px; font-weight: bold; text-transform: uppercase;">
+                                    1. MONTANT TOTAL DU MARCHÉ TOUTES TAXES COMPRISES (TTC)
+                                </td>
+                                <td style="border: 1px solid #000; padding: 5px 8px; text-align: center; font-weight: bold;">-</td>
+                                <td style="border: 1px solid #000; padding: 5px 8px; text-align: right; font-weight: bold;">
+                                    <t t-esc="o.format_monetary_value(o.amount_total)"/>
+                                </td>
+                            </tr>
+
+                            <!-- 2. MONTANT HT DU MARCHÉ -->
+                            <tr style="border: 1px solid #000;">
+                                <td style="border: 1px solid #000; padding: 5px 8px; font-weight: bold; text-transform: uppercase;">
+                                    2. MONTANT TOTAL DU MARCHÉ HORS TAXES (HT)
+                                </td>
+                                <td style="border: 1px solid #000; padding: 5px 8px; text-align: center; font-weight: bold;">-</td>
+                                <td style="border: 1px solid #000; padding: 5px 8px; text-align: right; font-weight: bold;">
+                                    <t t-esc="o.format_monetary_value(o.amount_untaxed)"/>
+                                </td>
+                            </tr>
+
+                            <!-- 3. TAUX ET MONTANT DE LA TVA SUR LE MARCHÉ -->
+                            <tr style="border: 1px solid #000;">
+                                <td style="border: 1px solid #000; padding: 5px 8px; text-transform: uppercase;">
+                                    3. TVA LÉGALE SUR LE MARCHÉ (18 %)
+                                </td>
+                                <td style="border: 1px solid #000; padding: 5px 8px; text-align: center; font-weight: bold;">18.00 %</td>
+                                <td style="border: 1px solid #000; padding: 5px 8px; text-align: right;">
+                                    <t t-esc="o.format_monetary_value(o.amount_tva)"/>
+                                </td>
+                            </tr>
+
+                            <!-- 4. TAUX D'AVANCE -->
+                            <tr style="border: 1px solid #000;">
+                                <td style="border: 1px solid #000; padding: 5px 8px; text-transform: uppercase;">
+                                    4. TAUX DE L'AVANCE ACCORDÉE
+                                </td>
+                                <td style="border: 1px solid #000; padding: 5px 8px; text-align: center; font-weight: bold;">
+                                    <t t-esc="'%.2f' % o.advance_rate"/> %
+                                </td>
+                                <td style="border: 1px solid #000; padding: 5px 8px; text-align: center; font-weight: bold;">
+                                    -
+                                </td>
+                            </tr>
+
+                            <!-- 5. AVANCE HT (SURLIGNÉE BLEU-GRIS #9ab7d9) -->
+                            <tr style="border: 1px solid #000; background-color: #9ab7d9; font-weight: bold;">
+                                <td style="border: 1px solid #000; padding: 5px 8px; text-transform: uppercase;">
+                                    5. MONTANT DE L'AVANCE DEMANDÉE HORS TAXES (HT)
+                                </td>
+                                <td style="border: 1px solid #000; padding: 5px 8px; text-align: center;">
+                                    <t t-esc="'%.0f' % o.advance_rate"/> %
+                                </td>
+                                <td style="border: 1px solid #000; padding: 5px 8px; text-align: right; font-size: 12px;">
+                                    <t t-esc="o.format_monetary_value(o.advance_amount_untaxed)"/>
+                                </td>
+                            </tr>
+
+                            <!-- 6. TVA SUR L'AVANCE -->
+                            <tr style="border: 1px solid #000;">
+                                <td style="border: 1px solid #000; padding: 5px 8px; text-transform: uppercase;">
+                                    6. TVA SUR L'AVANCE (18 %)
+                                </td>
+                                <td style="border: 1px solid #000; padding: 5px 8px; text-align: center; font-weight: bold;">18.00 %</td>
+                                <td style="border: 1px solid #000; padding: 5px 8px; text-align: right; font-weight: bold;">
+                                    <t t-esc="o.format_monetary_value(o.advance_tva)"/>
+                                </td>
+                            </tr>
+
+                            <!-- 7. MONTANT TOTAL À PAYER (TTC) -->
+                            <tr style="border: 2px solid #000; background-color: #9ab7d9; font-weight: bold;">
+                                <td style="border: 2px solid #000; padding: 6px 8px; font-size: 12px; text-transform: uppercase; color: #000;">
+                                    7. MONTANT TOTAL DE L'AVANCE À PAYER (TTC)
+                                </td>
+                                <td style="border: 2px solid #000; padding: 6px 8px; text-align: center; font-size: 14px;">★</td>
+                                <td style="border: 2px solid #000; padding: 6px 8px; text-align: right; font-size: 13px; color: #000;">
+                                    <t t-esc="o.format_monetary_value(o.amount_to_pay)"/> <t t-esc="o.currency_id.symbol"/>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- ================= ARRÊTÉ DE LA FACTURE EN LETTRES ================= -->
+                    <div style="border: 1px solid #000; padding: 6px 10px; margin-bottom: 25px; font-size: 11px; background-color: #f8f9fa;">
+                        Arrêtée la présente facture d'avance à la somme de :
+                        <strong style="text-transform: uppercase;">
+                            <t t-esc="o.amount_to_pay_words or ''"/>
+                        </strong>.
+                    </div>
+
+                    <!-- ================= CADRE DES SIGNATURES ================= -->
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 11px;">
+                        <tr>
+                            <td style="width: 50%; text-align: center; vertical-align: top;">
+                                <strong>POUR LE MAÎTRE D'OUVRAGE / CLIENT</strong><br/>
+                                <em>(Mention « Bon pour accord » &amp; Signature)</em>
+                                <br/><br/><br/><br/><br/>
+                                <strong style="text-transform: uppercase;"><t t-esc="o.partner_id.name"/></strong>
+                            </td>
+                            <td style="width: 50%; text-align: center; vertical-align: top;">
+                                <strong>POUR L'ENTREPRISE</strong><br/>
+                                <em>(Signature &amp; Cachet)</em>
+                                <br/><br/><br/><br/><br/>
+                                <strong style="text-transform: uppercase;"><t t-esc="o.company_id.name"/></strong>
+                            </td>
+                        </tr>
+                    </table>
+
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

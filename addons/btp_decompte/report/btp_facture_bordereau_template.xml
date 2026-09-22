@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_facture_bordereau_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <div class="article" style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #000; padding: 10px 15px;">
+                    
+                    <!-- ================= EN-TÊTE SUPÉRIEUR (3 COLONNES) ================= -->
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 8px;">
+                        <tr>
+                            <!-- 1. GAUCHE : LOGO DE L'ENTREPRISE -->
+                            <td style="width: 25%; vertical-align: middle; text-align: left;">
+                                <img t-if="o.company_id.logo" t-att-src="image_data_uri(o.company_id.logo)" style="max-height: 80px; max-width: 160px;" alt="Logo"/>
+                            </td>
+
+                            <!-- 2. MILIEU : INFORMATIONS JURIDIQUES ET FISCALES -->
+                            <td style="width: 50%; vertical-align: middle; text-align: center;">
+                                <div style="font-size: 15px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    <t t-esc="o.company_id.name or 'ENTREPRISE BTP'"/>
+                                </div>
+                                <div style="font-size: 10.5px; color: #222; margin-bottom: 2px;">
+                                    <t t-esc="o.company_id.street or ''"/> <t t-esc="o.company_id.city or ''"/> (<t t-esc="o.company_id.country_id.name or 'Burkina Faso'"/>)
+                                </div>
+                                <div style="font-size: 10px; color: #111;">
+                                    <strong>Tél :</strong> <t t-esc="o.company_id.phone or '-'"/> |
+                                    <strong>Email :</strong> <t t-esc="o.company_id.email or '-'"/>
+                                </div>
+                                <div style="font-size: 10px; color: #111;">
+                                    <strong>IFU :</strong> <t t-esc="o.company_id.ifu or o.company_id.vat or '-'"/> |
+                                    <strong>RCCM :</strong> <t t-esc="o.company_id.rccm or o.company_id.company_registry or '-'"/>
+                                </div>
+                                <div t-if="o.company_id.regime_fiscal or o.company_id.division_fiscale" style="font-size: 9px; color: #333; margin-top: 1px;">
+                                    <strong>Régime :</strong> <t t-esc="o.company_id.regime_fiscal or '-'"/> |
+                                    <strong>Division :</strong> <t t-esc="o.company_id.division_fiscale or '-'"/>
+                                </div>
+                            </td>
+
+                            <!-- 3. DROITE : CODE QR DE CERTIFICATION -->
+                            <td style="width: 25%; vertical-align: middle; text-align: right;">
+                                <img t-if="o.qr_code_image" t-att-src="'data:image/png;base64,%s' % o.qr_code_image.decode('utf-8')" style="width: 75px; height: 75px; border: 1px solid #000; padding: 2px;" alt="QR Code"/>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- LIGNE DE SÉPARATION -->
+                    <div style="border-bottom: 1.5px solid #000; margin-bottom: 12px;"></div>
+
+                    <!-- LIEU ET DATE (EN HAUT À DROITE COMME SUR LE MODÈLE) -->
+                    <div style="text-align: right; font-size: 11px; margin-bottom: 10px;">
+                        <span style="font-weight: 500;">
+                            <t t-esc="o.facture_city or 'Ouagadougou'"/> le <span t-esc="(o.invoice_date or datetime.date.today()).strftime('%d/%m/%Y')"/>
+                        </span>
+                    </div>
+
+                    <!-- TITRE DE LA FACTURE (CENTRÉ) -->
+                    <div style="text-align: center; margin-bottom: 15px;">
+                        <h2 style="font-size: 18px; font-weight: bold; text-transform: uppercase; margin: 0; padding: 4px 15px; display: inline-block; border-bottom: 2px solid #000; letter-spacing: 0.8px;">
+                            FACTURE N° <t t-esc="o.name or o.ref or 'PRO-FORMA'"/>
+                        </h2>
+                    </div>
+
+                    <!-- BLOC CLIENT & OBJET (GAUCHE) -->
+                    <div style="margin-bottom: 15px; font-size: 11.5px; line-height: 1.5;">
+                        <div>
+                            <strong>Doit : </strong>
+                            <span style="text-transform: uppercase; font-weight: bold;">
+                                <t t-esc="o.partner_id.name or 'CLIENT'"/>
+                            </span>
+                            <t t-if="o.partner_id.street">
+                                <span> - <t t-esc="o.partner_id.street"/></span>
+                            </t>
+                            <t t-if="o.partner_id.vat">
+                                <span> (IFU : <t t-esc="o.partner_id.vat"/>)</span>
+                            </t>
+                        </div>
+                        <div style="margin-top: 4px;">
+                            <strong>Objet : </strong>
+                            <span style="font-weight: 500;">
+                                <t t-esc="o.facture_objet or o.ref or (o.invoice_line_ids and o.invoice_line_ids[0].name) or '-'"/>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- ================= TABLEAU BORDEREAU DE TRAVAUX (EXACT SCREENSHOT) ================= -->
+                    <table style="width: 100%; border-collapse: collapse; border: 1.5px solid #000; margin-bottom: 12px; font-size: 11px;">
+                        <thead>
+                            <tr style="background-color: #f2f2f2; border: 1px solid #000; font-weight: bold; text-align: center;">
+                                <th style="border: 1px solid #000; padding: 6px 4px; width: 5%;">N°</th>
+                                <th style="border: 1px solid #000; padding: 6px 4px; width: 37%;">Désignation</th>
+                                <th style="border: 1px solid #000; padding: 6px 4px; width: 8%;">Unité</th>
+                                <th style="border: 1px solid #000; padding: 6px 4px; width: 10%;">Quantité</th>
+                                <th style="border: 1px solid #000; padding: 6px 4px; width: 20%;">Montant HT du marché</th>
+                                <th style="border: 1px solid #000; padding: 6px 4px; width: 20%;">Montant de la présente facture</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-set="valid_lines" t-value="o.invoice_line_ids.filtered(lambda l: l.display_type not in ('line_section', 'line_note'))"/>
+                            <t t-if="valid_lines">
+                                <t t-set="idx" t-value="1"/>
+                                <t t-foreach="valid_lines" t-as="line">
+                                    <tr style="border: 1px solid #000;">
+                                        <td style="border: 1px solid #000; text-align: center; padding: 5px 4px;">
+                                            <t t-esc="idx"/>
+                                        </td>
+                                        <td style="border: 1px solid #000; padding: 5px 6px;">
+                                            <span t-field="line.name"/>
+                                        </td>
+                                        <td style="border: 1px solid #000; text-align: center; padding: 5px 4px;">
+                                            <t t-esc="line.product_uom_id.name or line.product_id.uom_id.name or '-'"/>
+                                        </td>
+                                        <td style="border: 1px solid #000; text-align: center; padding: 5px 4px;">
+                                            <t t-esc="('%.0f' % line.quantity) if line.quantity.is_integer() else ('%.2f' % line.quantity)"/>
+                                        </td>
+                                        <td style="border: 1px solid #000; text-align: right; padding: 5px 6px;">
+                                            <t t-set="l_val" t-value="line.price_subtotal if line.price_subtotal else (line.quantity * line.price_unit)"/>
+                                            <t t-esc="o.format_monetary_value(line.montant_marche_ht or l_val)"/>
+                                        </td>
+                                        <td style="border: 1px solid #000; text-align: right; padding: 5px 6px; font-weight: bold;">
+                                            <t t-esc="o.format_monetary_value(line.price_subtotal if line.price_subtotal else (line.quantity * line.price_unit))"/>
+                                        </td>
+                                    </tr>
+                                    <t t-set="idx" t-value="idx + 1"/>
+                                </t>
+                            </t>
+                            <t t-else="">
+                                <tr style="border: 1px solid #000;">
+                                    <td style="border: 1px solid #000; text-align: center; padding: 5px 4px;">1</td>
+                                    <td style="border: 1px solid #000; padding: 5px 6px;">
+                                        <t t-esc="o.facture_objet or 'Travaux / Prestations selon bordereau'"/>
+                                    </td>
+                                    <td style="border: 1px solid #000; text-align: center; padding: 5px 4px;">FF</td>
+                                    <td style="border: 1px solid #000; text-align: center; padding: 5px 4px;">1</td>
+                                    <td style="border: 1px solid #000; text-align: right; padding: 5px 6px;">
+                                        <t t-esc="o.format_monetary_value(o.facture_marche_ht or o.facture_amount_presente_ht)"/>
+                                    </td>
+                                    <td style="border: 1px solid #000; text-align: right; padding: 5px 6px; font-weight: bold;">
+                                        <t t-esc="o.format_monetary_value(o.facture_amount_presente_ht)"/>
+                                    </td>
+                                </tr>
+                            </t>
+
+                            <!-- 1. TOTAL PRÉSENTE FACTURE HTVA -->
+                            <tr style="border: 1px solid #000;">
+                                <td colspan="4" style="border: 1px solid #000; padding: 5px 8px; font-weight: 500;">
+                                    Montant de la présente facture en HTVA
+                                </td>
+                                <td colspan="2" style="border: 1px solid #000; text-align: right; padding: 5px 8px; font-weight: bold;">
+                                    <t t-esc="o.format_monetary_value(o.facture_amount_presente_ht)"/>
+                                </td>
+                            </tr>
+
+                            <!-- 2. DÉDUCTION FACTURE N°1 PERÇUE -->
+                            <tr style="border: 1px solid #000;">
+                                <td colspan="4" style="border: 1px solid #000; padding: 5px 8px; font-weight: 500;">
+                                    <t t-esc="o.facture_deduction_label or 'Montant de la facture n°1 perçue de 50%'"/>
+                                </td>
+                                <td colspan="2" style="border: 1px solid #000; text-align: right; padding: 5px 8px;">
+                                    - <t t-esc="o.format_monetary_value(o.facture_deduction_amount)"/>
+                                </td>
+                            </tr>
+
+                            <!-- 3. MONTANT NET DE LA PRÉSENTE FACTURE EN HTVA -->
+                            <tr style="border: 1px solid #000; background-color: #f0f4f8; font-weight: bold;">
+                                <td colspan="4" style="border: 1px solid #000; padding: 5px 8px; text-transform: uppercase;">
+                                    MONTANT NET DE LA PRESENTE FACTURE EN HTVA
+                                </td>
+                                <td colspan="2" style="border: 1px solid #000; text-align: right; padding: 5px 8px; font-weight: bold;">
+                                    <t t-esc="o.format_monetary_value(o.facture_net_ht)"/>
+                                </td>
+                            </tr>
+
+                            <!-- 4. MONTANT TVA 18% -->
+                            <tr style="border: 1px solid #000;">
+                                <td colspan="4" style="border: 1px solid #000; padding: 5px 8px; font-weight: 500;">
+                                    Montant de la TVA 18%
+                                </td>
+                                <td colspan="2" style="border: 1px solid #000; text-align: right; padding: 5px 8px;">
+                                    <t t-esc="o.format_monetary_value(o.facture_tva_18)"/>
+                                </td>
+                            </tr>
+
+                            <!-- 5. MONTANT NET DE LA PRÉSENTE FACTURE EN TTC -->
+                            <tr style="border: 2px solid #000; background-color: #9ab7d9; font-weight: bold;">
+                                <td colspan="4" style="border: 2px solid #000; padding: 6px 8px; font-size: 11.5px; text-transform: uppercase; color: #000;">
+                                    MONTANT NET DE LA PRESENTE FACTURE EN TTC
+                                </td>
+                                <td colspan="2" style="border: 2px solid #000; text-align: right; padding: 6px 8px; font-size: 12px; color: #000; font-weight: bold;">
+                                    <t t-esc="o.format_monetary_value(o.facture_net_ttc)"/> <t t-esc="o.currency_id.symbol or 'FCFA'"/>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- ================= ARRÊTÉ DE LA FACTURE EN LETTRES ================= -->
+                    <div style="border: 1.5px solid #000; padding: 6px 10px; margin-bottom: 25px; font-size: 11px; background-color: #fafafa;">
+                        Arrêtée la présente facture à la somme de :
+                        <strong style="text-transform: uppercase;">
+                            <t t-esc="o.facture_net_ttc_words or ''"/>
+                        </strong>
+                    </div>
+
+                    <!-- ================= SIGNATURE (À DROITE COMME SUR LE MODÈLE) ================= -->
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                        <tr>
+                            <td style="width: 60%;"></td>
+                            <td style="width: 40%; text-align: center; vertical-align: top;">
+                                <div style="font-weight: bold; text-decoration: underline; font-size: 12px; margin-bottom: 60px;">
+                                    <t t-esc="o.facture_signatory or 'Signataire'"/>
+                                </div>
+                                <div style="font-size: 11px; color: #555;">
+                                    <em>(Signature &amp; Cachet)</em>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

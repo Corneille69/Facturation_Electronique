@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_decompte_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <div class="article" style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #000; padding: 5px 10px;">
+                    
+                    <!-- ================= EN-TÊTE SUPÉRIEUR (3 COLONNES) ================= -->
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 6px;">
+                        <tr>
+                            <!-- 1. EN HAUT À GAUCHE : LOGO DE L'ENTREPRISE -->
+                            <td style="width: 25%; vertical-align: middle; text-align: left;">
+                                <img t-if="o.company_id.logo" t-att-src="image_data_uri(o.company_id.logo)" style="max-height: 80px; max-width: 160px;" alt="Logo"/>
+                            </td>
+
+                            <!-- 2. EN HAUT AU MILIEU : INFORMATIONS FISCALES ET JURIDIQUES -->
+                            <td style="width: 50%; vertical-align: middle; text-align: center;">
+                                <div style="font-size: 16px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    <t t-esc="o.company_id.name or 'MY COMPANY'"/>
+                                </div>
+                                <div style="font-size: 11px; color: #222; margin-bottom: 2px;">
+                                    (<t t-esc="o.company_id.country_id.name or 'Burkina Faso'"/>)
+                                </div>
+                                <div style="font-size: 10px; color: #111;">
+                                    <strong>Email :</strong> <t t-esc="o.company_id.email or 'contact@entreprise.com'"/>
+                                </div>
+                                <div style="font-size: 10px; color: #111;">
+                                    <strong>IFU :</strong> <t t-esc="o.company_id.ifu or o.company_id.vat or '00045678W'"/> |
+                                    <strong>RCCM :</strong> <t t-esc="o.company_id.rccm or o.company_id.company_registry or 'BF-OUA-01-2025-B12-00456'"/> |
+                                    <strong>ATI :</strong> <t t-esc="o.company_id.ati or 'ATI-BTP-2025/112'"/>
+                                </div>
+                                <div style="font-size: 9px; color: #333; margin-top: 1px;">
+                                    <strong>Régime fiscal :</strong> <t t-esc="o.company_id.regime_fiscal or 'Réel Normal d\'Imposition (RNI)'"/> |
+                                    <strong>Division fiscale :</strong> <t t-esc="o.company_id.division_fiscale or 'Direction des Grandes Entreprises (DGE)'"/>
+                                </div>
+                            </td>
+
+                            <!-- 3. EN HAUT À DROITE : CODE QR DE CERTIFICATION ÉLECTRONIQUE -->
+                            <td style="width: 25%; vertical-align: middle; text-align: right;">
+                                <img t-if="o.qr_code_image" t-att-src="'data:image/png;base64,%s' % o.qr_code_image.decode('utf-8')" style="width: 80px; height: 80px; border: 1px solid #000; padding: 2px;" alt="QR Code"/>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- LIGNE DE SÉPARATION -->
+                    <div style="border-bottom: 1.5px solid #000; margin-bottom: 8px;"></div>
+
+                    <!-- ================= BANDEAU TITRE FACTURE (FOND BLEU-GRIS #9ab7d9) ================= -->
+                    <div style="background-color: #9ab7d9; border: 1px solid #000; padding: 5px; text-align: center; font-weight: bold; font-size: 13px; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">
+                        FACTURE N° <t t-esc="o.invoice_ref or 'FACT-0080'"/> DU DECOMPTE N°<t t-esc="'%02d' % o.number"/>
+                    </div>
+
+                    <!-- ================= CADRE INFORMATIONS MARCHÉ ================= -->
+                    <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 8px; font-size: 10.5px;">
+                        <tr>
+                            <td style="width: 50%; border: 1px solid #000; padding: 3px 6px;">
+                                <strong>Facture N° :</strong> <t t-esc="o.invoice_ref or 'FACT-0080'"/>
+                            </td>
+                            <td style="width: 50%; border: 1px solid #000; padding: 3px 6px;">
+                                <strong>Décompte N° :</strong> <t t-esc="'%02d' % o.number"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="border: 1px solid #000; padding: 3px 6px;">
+                                <strong>Référence du marché :</strong> Marché n° <t t-esc="o.market_id.name"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="border: 1px solid #000; padding: 3px 6px;">
+                                <strong>Objet :</strong> <t t-esc="o.market_id.objet"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="border: 1px solid #000; padding: 3px 6px;">
+                                <strong>Délai d'exécution :</strong> <t t-esc="o.market_id.delay or '12 mois'"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="border: 1px solid #000; padding: 3px 6px;">
+                                <strong>Date de début des travaux :</strong> <span t-field="o.market_id.date_start" t-options='{"widget": "date"}'/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="border: 1px solid #000; padding: 3px 6px;">
+                                <strong>FINANCEMENT :</strong> <t t-esc="o.financement or 'Fonds propres'"/>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- ================= TABLEAU DE CALCULS DU DÉCOMPTE ================= -->
+                    <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; font-size: 9.5px; margin-bottom: 10px;">
+                        <thead>
+                            <tr style="border: 1px solid #000;">
+                                <th style="width: 72%; border: 1px solid #000; padding: 3px 5px; text-transform: uppercase;"></th>
+                                <th style="width: 8%; border: 1px solid #000; padding: 3px 5px; text-align: center;"></th>
+                                <th style="width: 20%; border: 1px solid #000; padding: 3px 5px; text-align: right; background-color: #9ab7d9; font-weight: bold;">
+                                    EN <t t-esc="o.currency_id.symbol or 'FCFA'"/>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- LIGNE A -->
+                            <tr style="border: 1px solid #000;">
+                                <td style="border: 1px solid #000; padding: 3px 5px; font-weight: bold; text-transform: uppercase;">
+                                    MONTANT TOTAL TOUTES TAXES COMPRISES (TTC) (A)
+                                </td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: center; font-weight: bold;">A</td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: right; font-weight: bold;">
+                                    <t t-esc="o.format_monetary_value(o.market_id.amount_total)"/>
+                                </td>
+                            </tr>
+
+                            <!-- LIGNE B -->
+                            <tr style="border: 1px solid #000;">
+                                <td style="border: 1px solid #000; padding: 3px 5px; font-weight: bold; text-transform: uppercase;">
+                                    MONTANT TOTAL HORS TVA (B)
+                                </td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: center; font-weight: bold;">B</td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: right; font-weight: bold;">
+                                    <t t-esc="o.format_monetary_value(o.market_id.amount_untaxed)"/>
+                                </td>
+                            </tr>
+
+                            <!-- LIGNE C -->
+                            <tr style="border: 1px solid #000;">
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-transform: uppercase;">
+                                    TAUX D'EXECUTION SUIVANT ATTACHEMENT DU <span t-field="o.date_attachement" t-options='{"widget": "date"}'/> (C)
+                                </td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: center; font-weight: bold;">C</td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: right; font-weight: bold;">
+                                    <t t-esc="'%.2f' % o.progress_rate"/>%
+                                </td>
+                            </tr>
+
+                            <!-- LIGNE D -->
+                            <tr style="border: 1px solid #000;">
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-transform: uppercase;">
+                                    MONTANT HORS TVA DU TAUX D'AVANCEMENT DES TRAVAUX (D)
+                                </td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: center; font-weight: bold;">D</td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: right;">
+                                    <t t-esc="o.format_monetary_value(o.cumul_travaux_ht)"/>
+                                </td>
+                            </tr>
+
+                            <!-- LIGNE E -->
+                            <tr style="border: 1px solid #000;">
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-transform: uppercase;">
+                                    MONTANT HORS TVA DU DECOMPTE PASSÉ N°<t t-esc="o.previous_number"/> (E)
+                                </td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: center; font-weight: bold;">E</td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: right;">
+                                    <t t-esc="o.format_monetary_value(o.previous_decomptes_ht)"/>
+                                </td>
+                            </tr>
+
+                            <!-- LIGNE F (BLEU-GRIS #9ab7d9) -->
+                            <tr style="border: 1px solid #000; background-color: #9ab7d9; font-weight: bold;">
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-transform: uppercase;">
+                                    MONTANT HORS TVA DU DECOMPTE N°<t t-esc="'%02d' % o.number"/> (F)
+                                </td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: center;">F</td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: right;">
+                                    <t t-esc="o.format_monetary_value(o.current_decompte_ht)"/>
+                                </td>
+                            </tr>
+
+                            <!-- LIGNE G -->
+                            <tr style="border: 1px solid #000;">
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-transform: uppercase;">
+                                    TVA FACTURE SUR LE DECOMPTE N°<t t-esc="'%02d' % o.number"/> (18 %) (G)
+                                </td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: center; font-weight: bold;">G</td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: right;">
+                                    <t t-esc="o.format_monetary_value(o.current_decompte_tva)"/>
+                                </td>
+                            </tr>
+
+                            <!-- LIGNE H (BLEU-GRIS #9ab7d9) -->
+                            <tr style="border: 1px solid #000; background-color: #9ab7d9; font-weight: bold;">
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-transform: uppercase;">
+                                    MONTANT TTC DU DECOMPTE N°<t t-esc="'%02d' % o.number"/> (H)
+                                </td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: center;">H</td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: right;">
+                                    <t t-esc="o.format_monetary_value(o.current_decompte_ttc)"/>
+                                </td>
+                            </tr>
+
+                            <!-- LIGNE I -->
+                            <tr style="border: 1px solid #000;">
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-transform: uppercase;">
+                                    TAUX DE REMBOURSEMENT DE L'AVANCE DE DEMARRAGE (I)
+                                </td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: center; font-weight: bold;">I</td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: right; font-weight: bold;">
+                                    <t t-esc="'%.0f' % o.reimbursement_rate"/>%
+                                </td>
+                            </tr>
+
+                            <!-- LIGNE J -->
+                            <tr style="border: 1px solid #000;">
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-transform: uppercase;">
+                                    REMBOURSEMENT DE L'AVANCE DU DEMARRAGE HTVA (J)
+                                </td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: center; font-weight: bold;">J</td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: right;">
+                                    <t t-esc="o.format_monetary_value(o.current_advance_reimbursement)"/>
+                                </td>
+                            </tr>
+
+                            <!-- LIGNE K (BLEU CLAIR #d9e2f3) -->
+                            <tr style="border: 1px solid #000; background-color: #d9e2f3; font-weight: bold;">
+                                <td style="border: 1px solid #000; padding: 3px 5px;">
+                                    Montant HTVA du décompte n°<t t-esc="o.number"/> après remboursement de l'avance de démarrage (K)
+                                </td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: center;">K</td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: right;">
+                                    <t t-esc="o.format_monetary_value(o.ht_after_reimbursement)"/>
+                                </td>
+                            </tr>
+
+                            <!-- LIGNE L -->
+                            <tr style="border: 1px solid #000;">
+                                <td style="border: 1px solid #000; padding: 3px 5px;">
+                                    TVA sur décompte n°<t t-esc="o.number"/> après remboursement de l'avance de démarrage (18 %) (L)
+                                </td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: center; font-weight: bold;">L</td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: right;">
+                                    <t t-esc="o.format_monetary_value(o.tva_after_reimbursement)"/>
+                                </td>
+                            </tr>
+
+                            <!-- LIGNE M (BLEU-GRIS #9ab7d9) -->
+                            <tr style="border: 1px solid #000; background-color: #9ab7d9; font-weight: bold;">
+                                <td style="border: 1px solid #000; padding: 3px 5px;">
+                                    Montant TTC du décompte n°<t t-esc="o.number"/> après remboursement de l'avance de démarrage (M)
+                                </td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: center;">M</td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: right;">
+                                    <t t-esc="o.format_monetary_value(o.ttc_after_reimbursement)"/>
+                                </td>
+                            </tr>
+
+                            <!-- LIGNE N -->
+                            <tr style="border: 1px solid #000;">
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-transform: uppercase;">
+                                    RETENUE DE GARANTIE <t t-esc="'%.1f' % o.warranty_rate"/>% (N)
+                                </td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: center; font-weight: bold;">N</td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: right;">
+                                    <t t-esc="o.format_monetary_value(o.warranty_amount)"/>
+                                </td>
+                            </tr>
+
+                            <!-- LIGNE O -->
+                            <tr style="border: 1px solid #000;">
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-transform: uppercase;">
+                                    RETENUE A LA SOURCE <t t-esc="'%.1f' % o.source_rate"/>% (O)
+                                </td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: center; font-weight: bold;">O</td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: right;">
+                                    <t t-esc="o.format_monetary_value(o.source_amount)"/>
+                                </td>
+                            </tr>
+
+                            <!-- LIGNE ARCOP -->
+                            <tr style="border: 1px solid #000;">
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-transform: uppercase;">
+                                    REDEVANCE ARCOP <t t-if="o.arcop_type == 'rate'"><t t-esc="'%.2f' % o.arcop_rate"/>%</t><t t-else="">(Montant fixe)</t>
+                                </td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: center; font-weight: bold;">ARCOP</td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: right;">
+                                    <t t-esc="o.format_monetary_value(o.arcop_amount)"/>
+                                </td>
+                            </tr>
+
+                            <!-- LIGNE P (TOTAL RETENUES - BLEU CLAIR #d9e2f3) -->
+                            <tr style="border: 1px solid #000; background-color: #d9e2f3; font-weight: bold;">
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-transform: uppercase;">
+                                    TOTAL DES RETENUES CONTRACTUELLES ET LÉGALES (P)
+                                </td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: center;">P</td>
+                                <td style="border: 1px solid #000; padding: 3px 5px; text-align: right;">
+                                    <t t-esc="o.format_monetary_value(o.total_retentions)"/>
+                                </td>
+                            </tr>
+
+                            <!-- LIGNE Q (NET A PAYER - BLEU-GRIS #9ab7d9) -->
+                            <tr style="border: 2px solid #000; background-color: #9ab7d9; font-weight: bolder; font-size: 11px;">
+                                <td style="border: 2px solid #000; padding: 5px 6px; text-transform: uppercase;">
+                                    MONTANT NET HTVA A PAYER DU DÉCOMPTE N°<t t-esc="'%02d' % o.number"/> (Q)
+                                </td>
+                                <td style="border: 2px solid #000; padding: 5px 6px; text-align: center; font-size: 13px;">Q ★</td>
+                                <td style="border: 2px solid #000; padding: 5px 6px; text-align: right; font-size: 11.5px;">
+                                    <t t-esc="o.format_monetary_value(o.net_to_pay)"/> <t t-esc="o.currency_id.symbol"/>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- ================= ARRÊTÉ DU DÉCOMPTE EN LETTRES ================= -->
+                    <div style="border: 1px solid #000; padding: 5px 8px; margin-bottom: 12px; font-size: 10px; background-color: #f8f9fa;">
+                        Arrêté le présent décompte à la somme nette de :
+                        <strong style="text-transform: uppercase;">
+                            <t t-esc="o.net_to_pay_words or ''"/>
+                        </strong>.
+                    </div>
+
+                    <!-- ================= CADRE DES SIGNATURES ================= -->
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 15px; page-break-inside: avoid; font-size: 10.5px;">
+                        <tr>
+                            <td style="width: 50%; text-align: center; vertical-align: top;">
+                                <strong>POUR LE MAÎTRE D'OUVRAGE / CLIENT</strong><br/>
+                                <em>(Mention « Bon pour accord » &amp; Signature)</em>
+                                <br/><br/><br/><br/>
+                                <strong style="text-transform: uppercase;"><t t-esc="o.partner_id.name"/></strong>
+                            </td>
+                            <td style="width: 50%; text-align: center; vertical-align: top;">
+                                <strong>POUR L'ENTREPRISE</strong><br/>
+                                <em>(Signature &amp; Cachet)</em>
+                                <br/><br/><br/><br/>
+                                <strong style="text-transform: uppercase;"><t t-esc="o.company_id.name"/></strong>
+                            </td>
+                        </tr>
+                    </table>
+
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

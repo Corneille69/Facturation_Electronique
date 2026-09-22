@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <!-- Initialisation automatique des modèles de factures avec leurs images miniatures -->
+        <function model="btp.facture.modele" name="_init_default_models"/>
+    </data>
+</odoo>

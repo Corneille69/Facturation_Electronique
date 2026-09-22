@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Menu Racine BTP -->
+    <menuitem id="menu_btp_root"
+              name="BTP"
+              web_icon="btp_decompte,static/description/icon.png"
+              sequence="30"
+              groups="group_btp_user"/>
+
+    <!-- 1. Petits marchés (Sans décomptes) -->
+    <menuitem id="menu_btp_petit_marche_root"
+              name="Petits marchés"
+              parent="menu_btp_root"
+              sequence="10"/>
+
+    <menuitem id="menu_btp_petit_marche"
+              name="Petits marchés"
+              parent="menu_btp_petit_marche_root"
+              action="action_btp_petit_marche"
+              sequence="10"/>
+
+    <!-- 2. Grands marchés BTP (Avec décomptes) -->
+    <menuitem id="menu_btp_grand_marche_root"
+              name="Grands marchés BTP"
+              parent="menu_btp_root"
+              sequence="20"/>
+
+    <menuitem id="menu_btp_market"
+              name="Marchés BTP"
+              parent="menu_btp_grand_marche_root"
+              action="action_btp_market"
+              sequence="10"/>
+
+    <menuitem id="menu_btp_decompte_all"
+              name="Tous les Décomptes"
+              parent="menu_btp_grand_marche_root"
+              action="action_btp_decompte"
+              sequence="20"/>
+
+    <menuitem id="menu_btp_decompte_to_validate"
+              name="Décomptes à valider"
+              parent="menu_btp_grand_marche_root"
+              action="action_btp_decompte_to_validate"
+              sequence="30"/>
+
+    <menuitem id="menu_btp_decompte_final"
+              name="Décomptes finaux"
+              parent="menu_btp_grand_marche_root"
+              action="action_btp_decompte_final"
+              sequence="40"/>
+
+    <!-- 3. Factures Spécifiques (Bordereaux de Travaux) -->
+    <record id="action_btp_facture_bordereau_menu" model="ir.actions.act_window">
+        <field name="name">Factures Bordereaux de Travaux</field>
+        <field name="res_model">account.move</field>
+        <field name="view_mode">tree,form,kanban</field>
+        <field name="domain">[('move_type', '=', 'out_invoice'), ('decompte_id', '=', False), ('petit_marche_id', '=', False)]</field>
+        <field name="context">{'default_move_type': 'out_invoice', 'default_facture_modele_code': 'bordereau_travaux'}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Créez votre première Facture Spécifique (Modèle Bordereau) !
+            </p>
+            <p>
+                Remplissez les lignes de travaux, le montant HT du marché, ajustez la déduction et imprimez votre facture immédiatement.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_btp_facture_bordereau_root"
+              name="Factures Spécifiques"
+              parent="menu_btp_root"
+              sequence="25"/>
+
+    <menuitem id="menu_btp_facture_bordereau_list"
+              name="Factures Bordereaux de Travaux"
+              parent="menu_btp_facture_bordereau_root"
+              action="action_btp_facture_bordereau_menu"
+              sequence="10"/>
+
+    <menuitem id="menu_btp_facture_modele_galerie"
+              name="Galerie des Modèles Visuels"
+              parent="menu_btp_facture_bordereau_root"
+              action="action_btp_facture_modele"
+              sequence="20"/>
+
+    <!-- 4. Menu Configuration -->
+    <menuitem id="menu_btp_config_root"
+              name="Configuration"
+              parent="menu_btp_root"
+              sequence="100"
+              groups="group_btp_manager"/>
+
+    <menuitem id="menu_btp_my_company"
+              name="Informations Entreprise"
+              parent="menu_btp_config_root"
+              action="action_btp_my_company"
+              sequence="10"/>
+
+    <menuitem id="menu_btp_settings"
+              name="Paramètres"
+              parent="menu_btp_config_root"
+              action="action_btp_config_settings"
+              sequence="20"/>
+</odoo>

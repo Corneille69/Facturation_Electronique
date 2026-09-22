@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Action Impression Facture Avance Petit Marché -->
+    <record id="action_report_btp_petit_marche" model="ir.actions.report">
+        <field name="name">Facture Avance Petit Marché</field>
+        <field name="model">btp.petit.marche</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">btp_decompte.report_petit_marche_document</field>
+        <field name="report_file">btp_decompte.report_petit_marche_document</field>
+        <field name="print_report_name">'Facture_Avance_%s' % (object.name or 'PM')</field>
+        <field name="binding_model_id" ref="model_btp_petit_marche"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="paperformat_btp_facture"/>
+    </record>
+</odoo>

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_inherit_btp" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.btp</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority" eval="90"/>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="BTP" string="BTP" name="btp_decompte" groups="btp_decompte.group_btp_manager">
+                    <block title="Identifiants Fiscaux &amp; En-tête Facture BTP" id="btp_fiscal_settings">
+                        <setting id="btp_company_info" string="Informations Entreprise" help="Personnalisez le logo, l'adresse, l'email et les coordonnées de l'entreprise">
+                            <div class="content-group">
+                                <div class="mt8">
+                                    <button name="%(action_btp_my_company)d" string="Modifier la Fiche Société (Logo, Nom, Email...)" type="action" class="btn-link" icon="fa-arrow-right"/>
+                                </div>
+                            </div>
+                        </setting>
+                        <setting id="btp_currency_setting" string="Devise de Facturation" help="Devise principale utilisée par défaut pour les marchés et décomptes (FCFA par défaut, Dollar, Euro)">
+                            <div class="content-group">
+                                <div class="row mt16">
+                                    <label string="Devise principale" for="currency_id" class="col-lg-3 o_light_label"/>
+                                    <field name="currency_id" options="{'no_create': True, 'no_open': True}"/>
+                                </div>
+                            </div>
+                        </setting>
+                        <setting id="btp_ifu_setting" string="Mentions Légales &amp; Fiscale">
+                            <div class="content-group">
+                                <div class="row mt16">
+                                    <label string="N° IFU" for="btp_ifu" class="col-lg-3 o_light_label"/>
+                                    <field name="btp_ifu"/>
+                                </div>
+                                <div class="row mt8">
+                                    <label string="N° RCCM" for="btp_rccm" class="col-lg-3 o_light_label"/>
+                                    <field name="btp_rccm"/>
+                                </div>
+                                <div class="row mt8">
+                                    <label string="N° ATI" for="btp_ati" class="col-lg-3 o_light_label"/>
+                                    <field name="btp_ati"/>
+                                </div>
+                                <div class="row mt8">
+                                    <label string="Régime fiscal" for="btp_regime_fiscal" class="col-lg-3 o_light_label"/>
+                                    <field name="btp_regime_fiscal"/>
+                                </div>
+                                <div class="row mt8">
+                                    <label string="Division fiscale" for="btp_division_fiscale" class="col-lg-3 o_light_label"/>
+                                    <field name="btp_division_fiscale"/>
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Action pour ouvrir directement les Paramètres BTP -->
+    <record id="action_btp_config_settings" model="ir.actions.act_window">
+        <field name="name">Paramètres BTP</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+        <field name="context">{'module' : 'btp_decompte', 'bin_size': False}</field>
+    </record>
+</odoo>

@@ -1,0 +1,386 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Ajout des boutons et des champs BTP et Modèles sur le formulaire de Facture Odoo -->
+    <record id="view_move_form_inherit_btp" model="ir.ui.view">
+        <field name="name">account.move.form.inherit.btp</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <!-- 1. BOUTONS D'IMPRESSION DANS L'EN-TÊTE -->
+            <xpath expr="//header" position="inside">
+                <button name="action_print_facture_bordereau"
+                        string="Imprimer Facture (Modèle Bordereau)"
+                        type="object"
+                        class="btn-primary"
+                        icon="fa-print"
+                        invisible="decompte_id or petit_marche_id"/>
+                <button name="action_print_btp_decompte"
+                        string="Imprimer Facture Décompte (Grand Marché)"
+                        type="object"
+                        class="btn-secondary"
+                        invisible="not decompte_id"/>
+                <button name="action_print_btp_petit_marche"
+                        string="Imprimer Facture Petit Marché"
+                        type="object"
+                        class="btn-secondary"
+                        invisible="not petit_marche_id"/>
+            </xpath>
+
+            <!-- 2. SÉLECTION DU MODÈLE ET TYPE BTP EN HAUT DE FACTURE -->
+            <xpath expr="//field[@name='ref']" position="after">
+                <field name="facture_modele_code" invisible="1"/>
+                <field name="facture_modele_id" widget="many2one" options="{'no_create': True}" placeholder="Choisir un modèle visuel..." invisible="decompte_id or petit_marche_id"/>
+                <field name="btp_market_type" widget="badge"
+                       decoration-info="btp_market_type == 'petit'"
+                       decoration-primary="btp_market_type == 'grand'"
+                       readonly="state != 'draft'"/>
+                <field name="petit_marche_id" readonly="state != 'draft'"
+                       invisible="btp_market_type != 'petit' and not petit_marche_id"/>
+                <field name="decompte_id" readonly="state != 'draft'"
+                       invisible="btp_market_type != 'grand' and not decompte_id"/>
+                <field name="market_id" readonly="1" invisible="not market_id"/>
+            </xpath>
+
+            <!-- 3. LIGNE DE FACTURE : AJOUT COLONNE MONTANT HT DU MARCHÉ -->
+            <xpath expr="//field[@name='invoice_line_ids']/tree//field[@name='price_subtotal']" position="before">
+                <field name="montant_marche_ht" string="Montant HT Marché" optional="show"/>
+            </xpath>
+
+            <!-- 4. ONGLET DÉDIÉ : MODÈLE VISUEL, GRILLE COMPLÈTE DES MONTANTS & CALCULS AUTOMATIQUES (PLACÉ EN PREMIER) -->
+            <xpath expr="//page[@id='invoice_tab']" position="before">
+                <page string="Facture Spécifique (Bordereau &amp; Visuel)" name="facture_modele_page" invisible="decompte_id or petit_marche_id">
+                    <field name="currency_id" invisible="1"/>
+                    <div class="row">
+                        
+                        <!-- VOLET GAUCHE : CHOIX DU MODÈLE ET GUIDAGE VISUEL AVEC IMAGE -->
+                        <div class="col-md-4 border-end pe-3">
+                            <div class="alert alert-info py-2 px-3 mb-3" role="status">
+                                <strong><i class="fa fa-paint-brush me-1" title="Modèle"/> Modèle de Facture</strong><br/>
+                                <span class="small">L'image ci-dessous illustre le document exact tel qu'il sera imprimé.</span>
+                            </div>
+                            <group>
+                                <field name="facture_modele_id" options="{'no_create': True}" widget="many2one"/>
+                            </group>
+                            <div class="text-center p-2 bg-light border rounded shadow-sm mt-2">
+                                <field name="facture_modele_image" widget="image" class="img-fluid rounded" style="max-height: 400px; object-fit: contain; width: 100%;" readonly="1"/>
+                            </div>
+                            <div class="text-muted small text-center mt-2 fst-italic">
+                                Rendu visuel du document imprimé
+                            </div>
+
+                            <div class="card mt-3 border-0 bg-light shadow-sm">
+                                <div class="card-body p-3">
+                                    <h6 class="text-primary fw-bold mb-2">
+                                        <i class="fa fa-info-circle me-1" title="Guide"/> Guide étape par étape
+                                    </h6>
+                                    <ol class="small text-muted ps-3 mb-0">
+                                        <li>Renseignez le client, la ville et l'objet des travaux ci-contre.</li>
+                                        <li>Saisissez le <strong>Montant de la présente facture en HTVA</strong> (ou le <strong>Montant HT du Marché</strong>) ci-contre.</li>
+                                        <li>La Déduction (50% avec signe -), le Net HT, la TVA (18%) et le Net TTC se calculent et <strong>se remplissent instantanément</strong> dans les cases !</li>
+                                        <li>Vous pouvez également ajuster le taux de déduction ou le montant déduit.</li>
+                                        <li>Cliquez sur <strong>« Imprimer la Facture (PDF) »</strong> pour obtenir votre facture bordereau officielle.</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- VOLET DROIT : TOUTES LES CASES DES MONTANTS AVEC CALCULS AUTOMATIQUES -->
+                        <div class="col-md-8 ps-3">
+                            
+                            <!-- 1. INFORMATIONS D'EN-TÊTE -->
+                            <div class="card mb-3 border-0 shadow-sm bg-light">
+                                <div class="card-header bg-primary text-white fw-bold py-2">
+                                    <i class="fa fa-pencil-square-o me-2" title="En-tête"/> Informations Générales &amp; Signataire
+                                </div>
+                                <div class="card-body py-2">
+                                    <group>
+                                        <group>
+                                            <field name="facture_city" placeholder="Ex: Ouagadougou"/>
+                                            <field name="invoice_date" string="Date de facture"/>
+                                        </group>
+                                        <group>
+                                            <field name="facture_signatory" placeholder="Ex: Le Directeur Général / Signataire"/>
+                                        </group>
+                                    </group>
+                                    <group>
+                                        <field name="facture_objet" placeholder="Ex: TRAVAUX DE RÉFECTION ET DE PEINTURE DES BÂTIMENTS ADMINISTRATIFS..." rows="2"/>
+                                    </group>
+                                </div>
+                            </div>
+
+                            <!-- 2. CADRE OFFICIEL : CASES À REMPLIR ET CALCULS AUTOMATIQUES -->
+                            <div class="card mb-3 border-primary shadow-sm">
+                                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-2">
+                                    <span class="fw-bold fs-6">
+                                        <i class="fa fa-calculator me-2" title="Calculatrice"/> Grille Officielle des Montants &amp; Calculs Automatiques
+                                    </span>
+                                    <span class="badge bg-success text-white">Calcul Automatique Instantané</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-success d-flex align-items-center mb-3 p-3 border-start border-4 border-success" role="status">
+                                        <i class="fa fa-magic fa-2x text-success me-3" title="Magique"/>
+                                        <div>
+                                            <h6 class="fw-bold text-success mb-1">REMPLISSAGE &amp; CALCULS AUTOMATIQUES EN TEMPS RÉEL</h6>
+                                            <span>Saisissez le <strong>Montant de la présente facture en HTVA</strong> ou le <strong>Montant HT du Marché</strong> : la Déduction de 50% avec le signe moins (-), le Net HT, la TVA 18%, le Net TTC et l'arrêté en lettres se <strong>remplissent automatiquement dans les cases ci-dessous</strong> !</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="row g-3">
+                                        <!-- CASE 1 : MONTANT PRINCIPAL (PRÉSENTE FACTURE HTVA) -->
+                                        <div class="col-md-6">
+                                            <div class="p-3 border border-2 border-primary rounded bg-white h-100 shadow-sm">
+                                                <span class="o_form_label fw-bold text-primary mb-1 d-block">
+                                                    <i class="fa fa-pencil me-1" title="Saisie"/> 1. Montant de la présente facture en HTVA :
+                                                </span>
+                                                <field name="facture_amount_presente_ht"
+                                                       widget="monetary"
+                                                       options="{'currency_field': 'currency_id'}"
+                                                       class="fw-bold fs-4 text-primary w-100"
+                                                       readonly="0"
+                                                       placeholder="0.00"
+                                                       help="Saisissez ce montant principal pour déclencher tous les calculs automatiques"/>
+                                                <small class="text-muted d-block mt-1">
+                                                    Saisie principale : toutes les autres cases se remplissent instantanément.
+                                                </small>
+                                            </div>
+                                        </div>
+
+                                        <!-- CASE 2 : MONTANT HT DU MARCHÉ -->
+                                        <div class="col-md-6">
+                                            <div class="p-3 border border-2 border-primary rounded bg-white h-100 shadow-sm">
+                                                <span class="o_form_label fw-bold text-primary mb-1 d-block">
+                                                    <i class="fa fa-pencil me-1" title="Saisie"/> Montant HT du Marché :
+                                                </span>
+                                                <field name="facture_marche_ht"
+                                                       widget="monetary"
+                                                       options="{'currency_field': 'currency_id'}"
+                                                       class="fw-bold fs-4 text-dark w-100"
+                                                       readonly="0"
+                                                       placeholder="0.00"
+                                                       help="Montant HT contractuel du Marché : déclenche également tous les calculs automatiques"/>
+                                                <small class="text-muted d-block mt-1">
+                                                    Saisie principale : toutes les cases se remplissent aussi automatiquement.
+                                                </small>
+                                            </div>
+                                        </div>
+
+                                        <!-- CASE 3 : DÉDUCTION FACTURE N°1 PERÇUE (50%) - AVEC SIGNE MOINS (-) -->
+                                        <div class="col-md-12">
+                                            <div class="p-3 border border-2 border-danger rounded shadow-sm" style="background-color: #fff5f5;">
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <span class="o_form_label fw-bold text-danger mb-0 fs-6">
+                                                        <i class="fa fa-minus-circle me-1" title="Déduction négative"/> 2. Déduction de la Facture N°1 perçue (Signe Moins -) :
+                                                    </span>
+                                                    <span class="badge bg-danger text-white">Rempli Négativement (-)</span>
+                                                </div>
+                                                <div class="row g-2 align-items-center">
+                                                    <div class="col-md-5">
+                                                        <span class="o_form_label small text-muted mb-0">Libellé affiché sur la facture :</span>
+                                                        <field name="facture_deduction_label" class="form-control-sm w-100" readonly="0"/>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <span class="o_form_label small text-muted mb-0">Taux Déduction (%) :</span>
+                                                        <div class="input-group input-group-sm">
+                                                            <field name="facture_deduction_rate" class="fw-bold text-danger" readonly="0"/>
+                                                            <span class="input-group-text">%</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <span class="o_form_label small fw-bold text-danger mb-0">Case Montant Déduit (Négatif -) :</span>
+                                                        <field name="facture_deduction_amount"
+                                                               widget="monetary"
+                                                               options="{'currency_field': 'currency_id'}"
+                                                               class="fw-bold fs-4 text-danger w-100"
+                                                               readonly="0"
+                                                               force_save="1"
+                                                               help="Montant déduit avec signe moins (-) calculé à 50% du montant principal"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- CASE 4 : MONTANT NET DE LA PRÉSENTE FACTURE EN HTVA -->
+                                        <div class="col-md-6">
+                                            <div class="p-3 border border-2 border-dark rounded shadow-sm" style="background-color: #f8f9fa;">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <span class="o_form_label fw-bold text-dark mb-0">
+                                                        3. MONTANT NET DE LA PRESENTE FACTURE EN HTVA :
+                                                    </span>
+                                                    <span class="badge bg-secondary text-white">Net HT</span>
+                                                </div>
+                                                <field name="facture_net_ht"
+                                                       widget="monetary"
+                                                       options="{'currency_field': 'currency_id'}"
+                                                       class="fw-bold fs-4 text-dark w-100"
+                                                       readonly="1"
+                                                       force_save="1"
+                                                       help="Calculé automatiquement : Présente Facture HTVA - Déduction"/>
+                                                <small class="text-muted d-block mt-1">
+                                                    Calcul automatique : Présente HTVA - abs(Déduction).
+                                                </small>
+                                            </div>
+                                        </div>
+
+                                        <!-- CASE 5 : MONTANT DE LA TVA 18% -->
+                                        <div class="col-md-6">
+                                            <div class="p-3 border border-2 border-info rounded shadow-sm" style="background-color: #f0f8ff;">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <span class="o_form_label fw-bold text-info-emphasis mb-0">
+                                                        4. Montant de la TVA 18% :
+                                                    </span>
+                                                    <span class="badge bg-info text-dark">TVA 18%</span>
+                                                </div>
+                                                <div class="row g-2 align-items-center">
+                                                    <div class="col-4">
+                                                        <span class="o_form_label small text-muted mb-0">Taux :</span>
+                                                        <field name="facture_tva_rate" readonly="0"/>
+                                                    </div>
+                                                    <div class="col-8">
+                                                        <span class="o_form_label small fw-bold text-secondary mb-0">Montant TVA :</span>
+                                                        <field name="facture_tva_18"
+                                                               widget="monetary"
+                                                               options="{'currency_field': 'currency_id'}"
+                                                               class="fw-bold fs-4 text-secondary w-100"
+                                                               readonly="1"
+                                                               force_save="1"
+                                                               help="Calculé automatiquement : 18% du Montant Net HT"/>
+                                                    </div>
+                                                </div>
+                                                <small class="text-muted d-block mt-1">
+                                                    Calcul automatique : Net HTVA × 18%.
+                                                </small>
+                                            </div>
+                                        </div>
+
+                                        <!-- CASE 6 : MONTANT NET DE LA PRÉSENTE FACTURE EN TTC (BANDEAU #9ab7d9) -->
+                                        <div class="col-md-12">
+                                            <div class="p-3 rounded border border-2 border-dark shadow" style="background-color: #9ab7d9; color: #000;">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <span class="fs-5 fw-bold text-uppercase d-block">
+                                                            <i class="fa fa-check-circle me-2" title="Validation TTC"/> 5. MONTANT NET DE LA PRESENTE FACTURE EN TTC :
+                                                        </span>
+                                                        <small class="text-dark">Net HTVA + TVA 18%</small>
+                                                    </div>
+                                                    <div class="text-end">
+                                                        <field name="facture_net_ttc"
+                                                               widget="monetary"
+                                                               options="{'currency_field': 'currency_id'}"
+                                                               class="fw-bold fs-2 text-dark"
+                                                               readonly="1"
+                                                               force_save="1"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- CASE 7 : ARRÊTÉE EN TOUTES LETTRES -->
+                                        <div class="col-md-12">
+                                            <div class="p-3 bg-light border border-2 border-secondary rounded shadow-sm">
+                                                <span class="small fw-bold text-muted d-block mb-1">
+                                                    Arrêtée la présente facture à la somme de :
+                                                </span>
+                                                <field name="facture_net_ttc_words"
+                                                       class="fw-bold text-uppercase text-dark fs-6"
+                                                       readonly="1"
+                                                       force_save="1"/>
+                                            </div>
+                                        </div>
+
+                                        <!-- BOUTON D'IMPRESSION DIRECT -->
+                                        <div class="col-md-12 text-center mt-3 pt-2 border-top">
+                                            <button name="action_print_facture_bordereau"
+                                                    string="Imprimer la Facture (PDF)"
+                                                    type="object"
+                                                    class="btn btn-primary btn-lg shadow px-5 py-2 fw-bold"
+                                                    icon="fa-print"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 3. APERÇU DIRECT DU BORDEREAU DE TRAVAUX -->
+                            <div class="mt-3">
+                                <h6 class="text-dark fw-bold border-bottom pb-2">
+                                    <i class="fa fa-eye me-1" title="Aperçu"/> Aperçu Direct du Document Tel Qu'Imprimé
+                                </h6>
+                                <field name="facture_bordereau_preview_html" widget="html" readonly="1" nolabel="1"/>
+                            </div>
+
+                        </div>
+                    </div>
+                </page>
+            </xpath>
+
+            <!-- 5. MESSAGE D'INFORMATION SUR L'ONGLET STANDARD DES LIGNES -->
+            <xpath expr="//page[@id='invoice_tab']" position="inside">
+                <div class="alert alert-info d-flex justify-content-between align-items-center mt-3" invisible="decompte_id or petit_marche_id" role="status">
+                    <div>
+                        <i class="fa fa-info-circle fa-lg me-2" title="Information"/>
+                        <span>Les calculs financiers et l'aperçu du document sont centralisés dans l'onglet <strong>Facture Spécifique (Bordereau &amp; Visuel)</strong>.</span>
+                    </div>
+                    <button name="action_print_facture_bordereau" string="Imprimer Facture (PDF)" type="object" class="btn btn-sm btn-primary fw-bold" icon="fa-print"/>
+                </div>
+            </xpath>
+
+            <!-- 6. ONGLETS SPÉCIFIQUES BTP MARCHÉS (PRÉSERVÉS STRICTEMENT) -->
+            <xpath expr="//notebook" position="inside">
+
+                <!-- ONGLET 1 : DÉTAILS DU PETIT MARCHÉ (PRÉSERVÉ STRICTEMENT) -->
+                <page string="Détails Petit Marché BTP" name="petit_marche_details_page" invisible="not petit_marche_id">
+                    <field name="petit_marche_financial_table_html" widget="html" readonly="1" nolabel="1"/>
+                    <group string="CHAMPS DE VALEURS DU MARCHÉ" groups="base.group_no_one">
+                        <group string="Marché Initial">
+                            <field name="petit_marche_amount_total"/>
+                            <field name="petit_marche_amount_untaxed"/>
+                            <field name="petit_marche_amount_tva"/>
+                        </group>
+                        <group string="Avance &amp; Montant à Payer">
+                            <field name="petit_marche_advance_rate"/>
+                            <field name="petit_marche_advance_untaxed"/>
+                            <field name="petit_marche_advance_tva"/>
+                            <field name="petit_marche_amount_to_pay"/>
+                        </group>
+                    </group>
+                </page>
+
+                <!-- ONGLET 2 : DÉTAILS DU GRAND MARCHÉ BTP (DÉCOMPTE) (PRÉSERVÉ STRICTEMENT) -->
+                <page string="Détails Grand Marché BTP (Décompte)" name="grand_marche_details_page" invisible="not decompte_id">
+                    <field name="decompte_table_html" widget="html" readonly="1" nolabel="1"/>
+                    <group string="CHAMPS DE VALEURS DU DÉCOMPTE" groups="base.group_no_one">
+                        <group string="Marché &amp; Avancement">
+                            <field name="decompte_number"/>
+                            <field name="decompte_progress_rate"/>
+                            <field name="decompte_cumul_travaux_ht"/>
+                            <field name="decompte_current_ht"/>
+                        </group>
+                        <group string="Règlement &amp; Retenues">
+                            <field name="decompte_advance_reimbursed"/>
+                            <field name="decompte_ht_after_reimbursement"/>
+                            <field name="decompte_total_retentions"/>
+                            <field name="decompte_net_to_pay" class="fw-bold fs-5 text-primary"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Redirection automatique de l'impression standard Facture Odoo vers les templates BTP & Spécifique -->
+    <template id="report_invoice_inherit_btp" inherit_id="account.report_invoice">
+        <xpath expr="//t[@t-call='account.report_invoice_document']" position="before">
+            <t t-if="o.facture_modele_code == 'bordereau_travaux'" t-call="btp_decompte.report_facture_bordereau_document" t-lang="lang">
+                <t t-set="docs" t-value="o"/>
+            </t>
+            <t t-if="o.facture_modele_code != 'bordereau_travaux' and o.decompte_id" t-call="btp_decompte.report_decompte_document" t-lang="lang">
+                <t t-set="docs" t-value="o.decompte_id"/>
+            </t>
+            <t t-if="o.facture_modele_code != 'bordereau_travaux' and not o.decompte_id and o.petit_marche_id" t-call="btp_decompte.report_petit_marche_document" t-lang="lang">
+                <t t-set="docs" t-value="o.petit_marche_id"/>
+            </t>
+        </xpath>
+        <xpath expr="//t[@t-call='account.report_invoice_document']" position="attributes">
+            <attribute name="t-if">o.facture_modele_code != 'bordereau_travaux' and not o.decompte_id and not o.petit_marche_id and o._get_name_invoice_report() == 'account.report_invoice_document'</attribute>
+        </xpath>
+    </template>
+</odoo>

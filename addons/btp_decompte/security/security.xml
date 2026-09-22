@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="module_category_btp" model="ir.module.category">
+        <field name="name">BTP Décomptes</field>
+        <field name="description">Gestion des marchés et des décomptes BTP</field>
+        <field name="sequence">20</field>
+    </record>
+
+    <record id="group_btp_user" model="res.groups">
+        <field name="name">Utilisateur BTP</field>
+        <field name="category_id" ref="module_category_btp"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user')), (4, ref('base.group_multi_currency'))]"/>
+    </record>
+
+    <record id="group_btp_manager" model="res.groups">
+        <field name="name">Responsable BTP</field>
+        <field name="category_id" ref="module_category_btp"/>
+        <field name="implied_ids" eval="[(4, ref('group_btp_user'))]"/>
+        <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+    </record>
+
+    <!-- Multi-company Rules -->
+    <record id="btp_market_comp_rule" model="ir.rule">
+        <field name="name">BTP Market multi-company</field>
+        <field name="model_id" ref="model_btp_market"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+    </record>
+
+    <record id="btp_decompte_comp_rule" model="ir.rule">
+        <field name="name">BTP Decompte multi-company</field>
+        <field name="model_id" ref="model_btp_decompte"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+    </record>
+</odoo>

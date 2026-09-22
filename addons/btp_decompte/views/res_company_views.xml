@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vue Formulaire Société avec les champs Fiscaux & BTP -->
+    <record id="view_company_form_inherit_btp" model="ir.ui.view">
+        <field name="name">res.company.form.inherit.btp</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Fiscalité BTP &amp; Facturation Électronique" name="btp_fiscalite_page">
+                    <group>
+                        <group string="Identifiants Légaux &amp; BTP">
+                            <field name="ifu" string="N° IFU"/>
+                            <field name="rccm" string="N° RCCM"/>
+                            <field name="ati" string="N° ATI"/>
+                        </group>
+                        <group string="Administration Fiscale &amp; Devise">
+                            <field name="currency_id" string="Devise principale" options="{'no_create': True, 'no_open': True}"/>
+                            <field name="regime_fiscal" string="Régime fiscal"/>
+                            <field name="division_fiscale" string="Division fiscale"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Action Serveur ouvrant directement la fiche de l'entreprise courante -->
+    <record id="action_btp_my_company" model="ir.actions.server">
+        <field name="name">Informations de l'Entreprise</field>
+        <field name="model_id" ref="base.model_res_company"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_open_my_company()</field>
+    </record>
+</odoo>

@@ -1,0 +1,130 @@
+# -*- coding: utf-8 -*-
+import base64
+import os
+from odoo import models, fields, api, _
+
+class BtpFactureModele(models.Model):
+    _name = 'btp.facture.modele'
+    _description = 'Modèle de Facture'
+    _order = 'sequence asc, id asc'
+
+    name = fields.Char(string='Nom du Modèle', required=True)
+    code = fields.Char(string='Code Technique', required=True, index=True)
+    sequence = fields.Integer(string='Séquence', default=10)
+    description = fields.Text(string='Description & Guide d\'Utilisation')
+    image_preview = fields.Binary(string='Image Miniature du Modèle', attachment=True)
+    
+    # Paramètres par défaut personnalisables
+    city_default = fields.Char(string='Ville par défaut', default='Ouagadougou')
+    deduction_label_default = fields.Char(
+        string='Libellé Déduction Facture N°1',
+        default='Montant de la facture n°1 perçue de 50%'
+    )
+    deduction_rate_default = fields.Float(string='Taux Déduction Défaut (%)', default=50.0)
+    signatory_default = fields.Char(string='Titre Signataire', default='Signataire')
+    is_default = fields.Boolean(string='Modèle par défaut', default=False)
+    active = fields.Boolean(string='Actif', default=True)
+    invoice_count = fields.Integer(string='Nombre de factures', compute='_compute_invoice_count')
+
+    def _compute_invoice_count(self):
+        for rec in self:
+            rec.invoice_count = self.env['account.move'].search_count([('facture_modele_id', '=', rec.id)])
+
+    def action_create_invoice(self):
+        self.ensure_one()
+        return {
+            'name': _('Nouvelle Facture - %s') % self.name,
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.move',
+            'view_mode': 'form',
+            'context': {
+                'default_move_type': 'out_invoice',
+                'default_facture_modele_id': self.id,
+                'default_facture_city': self.city_default or 'Ouagadougou',
+                'default_facture_deduction_label': self.deduction_label_default or 'Montant de la facture n°1 perçue de 50%',
+                'default_facture_deduction_rate': self.deduction_rate_default or 50.0,
+                'default_facture_signatory': self.signatory_default or 'Signataire',
+            }
+        }
+
+    def action_view_invoices(self):
+        self.ensure_one()
+        return {
+            'name': _('Factures - %s') % self.name,
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.move',
+            'view_mode': 'tree,form',
+            'domain': [('facture_modele_id', '=', self.id)],
+            'context': {'default_move_type': 'out_invoice', 'default_facture_modele_id': self.id},
+        }
+
+    @api.model
+    def _init_default_models(self):
+        """Initialisation automatique des modèles avec leurs images de prévisualisation"""
+        module_path = os.path.dirname(os.path.dirname(__file__))
+        img_dir = os.path.join(module_path, 'static', 'src', 'img')
+
+        def load_img(fname):
+            fpath = os.path.join(img_dir, fname)
+            if os.path.exists(fpath):
+                with open(fpath, 'rb') as f:
+                    return base64.b64encode(f.read())
+            return False
+
+        models_data = [
+            {
+                'code': 'bordereau_travaux',
+                'name': 'Modèle Bordereau Travaux & Déduction Acompte',
+                'sequence': 1,
+                'description': 'Facture spécifique avec tableau de travaux (Unité, Quantité, Montant Marché HT, Montant Présente Facture), déduction de facture antérieure (50%), net HT, TVA 18%, net TTC et arrêté en toutes lettres.',
+                'image_preview': load_img('modele_bordereau_travaux.png'),
+                'city_default': 'Ouagadougou',
+                'deduction_label_default': 'Montant de la facture n°1 perçue de 50%',
+                'deduction_rate_default': 50.0,
+                'signatory_default': 'Signataire',
+                'is_default': True,
+            },
+            {
+                'code': 'grand_marche',
+                'name': 'Modèle Grand Marché BTP (Décompte A à Q)',
+                'sequence': 2,
+                'description': 'Facture officielle de Décompte pour les Grands Marchés BTP avec tableau détaillé de A à Q (avancement des travaux, remboursement d’avance, retenue de garantie 5%, retenue à la source 1% et Net à Payer).',
+                'image_preview': load_img('modele_grand_marche.png'),
+                'city_default': 'Ouagadougou',
+                'signatory_default': 'Pour l’Entreprise',
+            },
+            {
+                'code': 'petit_marche',
+                'name': 'Modèle Petit Marché BTP (Facture Avance 7 Lignes)',
+                'sequence': 3,
+                'description': 'Facture d’avance directe pour les Petits Marchés BTP sans décompte, avec tableau des 7 éléments financiers officiels et Code QR de certification.',
+                'image_preview': load_img('modele_petit_marche.png'),
+                'city_default': 'Ouagadougou',
+                'signatory_default': 'Pour l’Entreprise',
+            },
+            {
+                'code': 'standard',
+                'name': 'Modèle Facture Standard Odoo',
+                'sequence': 4,
+                'description': 'Modèle de facturation standard avec lignes d’articles et totaux classiques.',
+                'image_preview': load_img('modele_standard.png'),
+                'city_default': 'Ouagadougou',
+                'signatory_default': 'La Direction',
+            },
+        ]
+
+        for m_data in models_data:
+            existing = self.search([('code', '=', m_data['code'])], limit=1)
+            if existing:
+                # Ne pas écraser l'image si déjà modifiée par l'utilisateur
+                if not existing.image_preview and m_data['image_preview']:
+                    existing.write({'image_preview': m_data['image_preview']})
+                existing.write({
+                    'name': m_data['name'],
+                    'sequence': m_data['sequence'],
+                    'description': m_data['description'],
+                    'city_default': m_data['city_default'],
+                    'signatory_default': m_data['signatory_default'],
+                })
+            else:
+                self.create(m_data)

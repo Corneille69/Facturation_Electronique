@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Format de papier optimisé pour Facture BTP sur 1 page -->
+    <record id="paperformat_btp_facture" model="report.paperformat">
+        <field name="name">Format Facture BTP (A4 Compact)</field>
+        <field name="default" eval="False"/>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">6</field>
+        <field name="margin_bottom">6</field>
+        <field name="margin_left">8</field>
+        <field name="margin_right">8</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="dpi">96</field>
+    </record>
+
+    <!-- Action Impression Facture du Décompte -->
+    <record id="action_report_btp_decompte" model="ir.actions.report">
+        <field name="name">Facture du Décompte BTP</field>
+        <field name="model">btp.decompte</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">btp_decompte.report_decompte_document</field>
+        <field name="report_file">btp_decompte.report_decompte_document</field>
+        <field name="print_report_name">'Facture_%s_Decompte_N%s' % (object.invoice_ref or 'FACT', object.number)</field>
+        <field name="paperformat_id" ref="paperformat_btp_facture"/>
+        <field name="binding_model_id" ref="model_btp_decompte"/>
+        <field name="binding_type">report</field>
+    </record>
+</odoo>

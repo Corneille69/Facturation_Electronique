@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vue Liste / Tree Décompte -->
+    <record id="view_btp_decompte_tree" model="ir.ui.view">
+        <field name="name">btp.decompte.tree</field>
+        <field name="model">btp.decompte</field>
+        <field name="arch" type="xml">
+            <tree string="Décomptes BTP" decoration-info="state == 'draft'" decoration-warning="state == 'computed'" decoration-success="state in ('validated', 'invoiced', 'paid')" decoration-muted="state == 'cancel'">
+                <field name="number"/>
+                <field name="name"/>
+                <field name="market_id"/>
+                <field name="partner_id"/>
+                <field name="date"/>
+                <field name="progress_rate" string="Avancement (%)"/>
+                <field name="current_decompte_ht" sum="Total Décomptes HT"/>
+                <field name="current_advance_reimbursement" sum="Total Remboursements"/>
+                <field name="ht_after_reimbursement" sum="Total K (HT après remb.)"/>
+                <field name="total_retentions" sum="Total Retenues"/>
+                <field name="net_to_pay" sum="Total Net à Payer"/>
+                <field name="is_final" widget="boolean_toggle"/>
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-warning="state == 'computed'" decoration-primary="state == 'validated'" decoration-success="state in ('invoiced', 'paid')" decoration-muted="state == 'cancel'"/>
+                <field name="move_id" string="Facture"/>
+                <field name="currency_id" optional="show"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Vue Formulaire Décompte -->
+    <record id="view_btp_decompte_form" model="ir.ui.view">
+        <field name="name">btp.decompte.form</field>
+        <field name="model">btp.decompte</field>
+        <field name="arch" type="xml">
+            <form string="Décompte BTP">
+                <header>
+                    <button name="action_compute" string="Recalculer" type="object" class="btn-secondary" invisible="state not in ('draft', 'computed')"/>
+                    <button name="action_validate" string="Valider le Décompte" type="object" class="btn-primary" invisible="state not in ('draft', 'computed')"/>
+                    <button name="action_create_invoice" string="Créer la Facture Odoo" type="object" class="btn-success" invisible="state != 'validated' or move_id"/>
+                    <button name="action_reset_draft" string="Remettre en brouillon" type="object" invisible="state not in ('computed', 'validated') or move_id"/>
+                    <button name="action_cancel" string="Annuler" type="object" invisible="state in ('invoiced', 'paid', 'cancel')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,computed,validated,invoiced,paid"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_invoice" type="object" class="oe_stat_button" icon="fa-pencil-square-o" invisible="not move_id">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Facture Odoo</span>
+                                <span class="o_stat_value"><field name="move_id" readonly="1"/></span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="alert alert-warning text-center mb-3" role="alert" invisible="not is_final">
+                        <strong>Attention :</strong> Ce décompte est marqué comme <strong>DÉCOMPTE FINAL</strong>. Sa validation clôturera définitivement le marché.
+                    </div>
+
+                    <div class="oe_title">
+                        <label for="name" string="Désignation du Décompte"/>
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Informations Générales">
+                            <field name="market_id" readonly="state != 'draft'"/>
+                            <field name="partner_id" readonly="state != 'draft'"/>
+                            <field name="number" readonly="state != 'draft'"/>
+                            <field name="invoice_ref" readonly="1"/>
+                            <field name="date" readonly="state not in ('draft', 'computed')"/>
+                            <field name="date_attachement" readonly="state not in ('draft', 'computed')"/>
+                            <field name="financement" readonly="state not in ('draft', 'computed')"/>
+                            <field name="is_final" widget="boolean_toggle" readonly="state not in ('draft', 'computed')"/>
+                        </group>
+                        <group string="Facturation Odoo &amp; Certification">
+                            <field name="move_id" readonly="1" invisible="not move_id"/>
+                            <field name="payment_state" invisible="not move_id"/>
+                            <field name="company_id" groups="base.group_multi_company" readonly="state != 'draft'"/>
+                            <field name="currency_id" readonly="state not in ('draft', 'computed')" options="{'no_create': True, 'no_open': True}"/>
+                            <field name="qr_code_image" widget="image" class="oe_avatar" readonly="1" string="QR Code Certification"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <!-- PAGE 1 : TRAVAUX & AVANCEMENT -->
+                        <page string="Travaux &amp; Avancement" name="travaux_page">
+                            <group>
+                                <group string="Avancement &amp; Cumul">
+                                    <field name="market_amount_untaxed"/>
+                                    <label for="progress_rate" string="Taux d'avancement global cumulé"/>
+                                    <div class="o_row">
+                                        <field name="progress_rate" placeholder="Ex: 70.00" readonly="state not in ('draft', 'computed')"/>
+                                        <span>%</span>
+                                    </div>
+                                    <field name="cumul_travaux_ht"/>
+                                    <field name="previous_decomptes_ht"/>
+                                    <field name="current_decompte_ht" class="oe_subtotal_footer_separator text-primary fw-bold"/>
+                                </group>
+                                <group string="TVA sur Décompte Actuel (18 %)">
+                                    <field name="tva_rate"/>
+                                    <field name="current_decompte_tva"/>
+                                    <field name="current_decompte_ttc" class="oe_subtotal_footer_separator"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- PAGE 2 : AVANCE & REMBOURSEMENT -->
+                        <page string="Avance &amp; Remboursement" name="avance_page">
+                            <group>
+                                <group string="Avance de Démarrage">
+                                    <label for="advance_rate" string="Taux d'avance"/>
+                                    <div class="o_row">
+                                        <field name="advance_rate" readonly="state not in ('draft', 'computed')"/>
+                                        <span>%</span>
+                                    </div>
+                                    <field name="market_advance_total"/>
+                                    <label for="reimbursement_rate" string="Taux de remboursement"/>
+                                    <div class="o_row">
+                                        <field name="reimbursement_rate" readonly="state not in ('draft', 'computed')"/>
+                                        <span>%</span>
+                                    </div>
+                                </group>
+                                <group string="Suivi du Remboursement">
+                                    <field name="current_advance_reimbursement" class="fw-bold text-danger"/>
+                                    <field name="previous_advance_reimbursed"/>
+                                    <field name="total_advance_reimbursed"/>
+                                    <field name="remaining_advance" class="oe_subtotal_footer_separator"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- PAGE 3 : APRÈS REMBOURSEMENT -->
+                        <page string="Après Remboursement" name="after_reimbursement_page">
+                            <group>
+                                <group string="Décompte après Remboursement d'Avance">
+                                    <field name="current_decompte_ht"/>
+                                    <field name="current_advance_reimbursement"/>
+                                    <field name="ht_after_reimbursement" class="oe_subtotal_footer_separator text-success fw-bold fs-4"/>
+                                </group>
+                                <group string="TVA après remboursement (18 %)">
+                                    <field name="tva_after_reimbursement"/>
+                                    <field name="ttc_after_reimbursement" class="oe_subtotal_footer_separator"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- PAGE 4 : RETENUES & NET À PAYER -->
+                        <page string="Retenues &amp; Net à Payer" name="retentions_page">
+                            <group>
+                                <group string="Retenues Légales et Contractuelles">
+                                    <label for="warranty_rate" string="Retenue de garantie"/>
+                                    <div class="o_row">
+                                        <field name="warranty_rate" readonly="state not in ('draft', 'computed')"/>
+                                        <span>%</span>
+                                    </div>
+                                    <field name="warranty_amount"/>
+
+                                    <label for="source_rate" string="Retenue à la source"/>
+                                    <div class="o_row">
+                                        <field name="source_rate" readonly="state not in ('draft', 'computed')"/>
+                                        <span>%</span>
+                                    </div>
+                                    <field name="source_amount"/>
+
+                                    <field name="arcop_type" readonly="state not in ('draft', 'computed')"/>
+                                    <label for="arcop_rate" string="Taux ARCOP" invisible="arcop_type != 'rate'"/>
+                                    <div class="o_row" invisible="arcop_type != 'rate'">
+                                        <field name="arcop_rate" readonly="state not in ('draft', 'computed')"/>
+                                        <span>%</span>
+                                    </div>
+                                    <field name="arcop_fixed_input" invisible="arcop_type != 'fixed'" readonly="state not in ('draft', 'computed')"/>
+                                    <field name="arcop_amount"/>
+
+                                    <field name="total_retentions" class="oe_subtotal_footer_separator fw-bold text-danger"/>
+                                </group>
+                                <group string="Règlement &amp; Net à Payer">
+                                    <field name="ht_after_reimbursement" string="Base HT soumise aux retenues"/>
+                                    <field name="total_retentions" string="Total des retenues"/>
+                                    <div class="oe_subtotal_footer_separator"></div>
+                                    <field name="net_to_pay" class="oe_subtotal_footer_separator text-primary fw-bolder fs-3"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- PAGE 5 : TABLEAU OFFICIEL RÉCAPITULATIF (A à Q) -->
+                        <page string="Tableau Officiel Décompte" name="tableau_officiel_decompte_page">
+                            <field name="decompte_table_html" widget="html" readonly="1" nolabel="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vue Recherche Décompte -->
+    <record id="view_btp_decompte_search" model="ir.ui.view">
+        <field name="name">btp.decompte.search</field>
+        <field name="model">btp.decompte</field>
+        <field name="arch" type="xml">
+            <search string="Recherche Décomptes">
+                <field name="name" string="Désignation"/>
+                <field name="market_id" string="Marché"/>
+                <field name="partner_id" string="Client"/>
+                <separator/>
+                <filter name="filter_draft" string="Brouillon" domain="[('state', '=', 'draft')]"/>
+                <filter name="filter_computed" string="Calculé" domain="[('state', '=', 'computed')]"/>
+                <filter name="filter_to_validate" string="À Valider" domain="[('state', 'in', ('draft', 'computed'))]"/>
+                <filter name="filter_validated" string="Validé" domain="[('state', '=', 'validated')]"/>
+                <filter name="filter_invoiced" string="Facturé" domain="[('state', '=', 'invoiced')]"/>
+                <filter name="filter_final" string="Décomptes Finaux" domain="[('is_final', '=', True)]"/>
+                <group expand="0" string="Regrouper par">
+                    <filter name="group_market" string="Marché" context="{'group_by': 'market_id'}"/>
+                    <filter name="group_partner" string="Client" context="{'group_by': 'partner_id'}"/>
+                    <filter name="group_state" string="État" context="{'group_by': 'state'}"/>
+                    <filter name="group_date" string="Date" context="{'group_by': 'date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Actions Décomptes -->
+    <record id="action_btp_decompte" model="ir.actions.act_window">
+        <field name="name">Tous les Décomptes</field>
+        <field name="res_model">btp.decompte</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_btp_decompte_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Créez votre premier décompte BTP !
+            </p>
+            <p>
+                Sélectionnez le marché, saisissez le taux d'avancement : les travaux cumulés, les décomptes antérieurs, le remboursement de l'avance, les retenues et le net à payer sont calculés automatiquement.
+            </p>
+        </field>
+    </record>
+
+    <!-- Action Décomptes à Valider -->
+    <record id="action_btp_decompte_to_validate" model="ir.actions.act_window">
+        <field name="name">Décomptes à Valider</field>
+        <field name="res_model">btp.decompte</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('state', 'in', ('draft', 'computed'))]</field>
+        <field name="context">{'search_default_filter_to_validate': 1}</field>
+    </record>
+
+    <!-- Action Décomptes Finaux -->
+    <record id="action_btp_decompte_final" model="ir.actions.act_window">
+        <field name="name">Décomptes Finaux</field>
+        <field name="res_model">btp.decompte</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('is_final', '=', True)]</field>
+        <field name="context">{'search_default_filter_final': 1}</field>
+    </record>
+</odoo>

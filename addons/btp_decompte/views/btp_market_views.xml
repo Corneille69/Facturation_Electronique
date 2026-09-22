@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vue Liste / Tree Marché -->
+    <record id="view_btp_market_tree" model="ir.ui.view">
+        <field name="name">btp.market.tree</field>
+        <field name="model">btp.market</field>
+        <field name="arch" type="xml">
+            <tree string="Marchés BTP" decoration-info="state == 'draft'" decoration-warning="state == 'in_progress'" decoration-success="state == 'done'" decoration-muted="state == 'cancel'">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="date_market"/>
+                <field name="amount_untaxed" sum="Total HT"/>
+                <field name="amount_total" sum="Total TTC"/>
+                <field name="progress_global" widget="progressbar"/>
+                <field name="cumul_travaux_ht" sum="Total Cumul"/>
+                <field name="advance_remaining"/>
+                <field name="decompte_count" string="Décomptes"/>
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-primary="state == 'in_progress'" decoration-success="state == 'done'" decoration-muted="state == 'cancel'"/>
+                <field name="currency_id" optional="show"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Vue Formulaire Marché -->
+    <record id="view_btp_market_form" model="ir.ui.view">
+        <field name="name">btp.market.form</field>
+        <field name="model">btp.market</field>
+        <field name="arch" type="xml">
+            <form string="Marché BTP">
+                <header>
+                    <button name="action_start" string="Démarrer le marché" type="object" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_new_decompte" string="Nouveau Décompte" type="object" class="btn-success" invisible="state not in ('in_progress', 'draft') or is_final_done"/>
+                    <button name="action_done" string="Clôturer le marché" type="object" class="btn-secondary" invisible="state != 'in_progress'"/>
+                    <button name="action_draft" string="Remettre en brouillon" type="object" invisible="state != 'cancel'"/>
+                    <button name="action_cancel" string="Annuler" type="object" invisible="state in ('done', 'cancel')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,in_progress,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_decomptes" type="object" class="oe_stat_button" icon="fa-list-ol">
+                            <field name="decompte_count" widget="statinfo" string="Décomptes"/>
+                        </button>
+                        <button name="action_view_invoices" type="object" class="oe_stat_button" icon="fa-pencil-square-o">
+                            <field name="invoice_count" widget="statinfo" string="Factures"/>
+                        </button>
+                    </div>
+
+                    <div class="alert alert-success text-center mb-3" role="alert" invisible="not is_final_done">
+                        <strong>Marché Clôturé :</strong> Le décompte final de ce marché a été validé avec succès.
+                    </div>
+
+                    <div class="oe_title">
+                        <label for="name" string="Référence du Marché"/>
+                        <h1>
+                            <field name="name" placeholder="Ex: MUTRAF / AG / CA / 005/2025" readonly="state != 'draft'"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Informations Générales">
+                            <field name="partner_id" readonly="state != 'draft'"/>
+                            <field name="date_market" readonly="state not in ('draft', 'in_progress')"/>
+                            <field name="date_start" readonly="state not in ('draft', 'in_progress')"/>
+                            <field name="delay" readonly="state not in ('draft', 'in_progress')"/>
+                            <field name="date_end_expected" readonly="state not in ('draft', 'in_progress')"/>
+                            <field name="financement" readonly="state not in ('draft', 'in_progress')"/>
+                        </group>
+                        <group string="Contexte &amp; Liaisons">
+                            <field name="sale_order_id" readonly="state != 'draft'"/>
+                            <field name="company_id" groups="base.group_multi_company" readonly="state != 'draft'"/>
+                            <field name="currency_id" readonly="state != 'draft'" options="{'no_create': True, 'no_open': True}"/>
+                            <field name="is_final_done" invisible="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Objet des travaux" name="objet_page">
+                            <field name="objet" placeholder="Décrivez les travaux contractuels faisant l'objet du marché..." readonly="state not in ('draft', 'in_progress')"/>
+                        </page>
+
+                        <page string="Finances Contractuelles" name="finances_page">
+                            <group>
+                                <group string="Montant du Marché">
+                                    <field name="amount_untaxed" readonly="state != 'draft'"/>
+                                    <field name="tva_rate"/>
+                                    <field name="amount_tva"/>
+                                    <field name="amount_total" class="oe_subtotal_footer_separator"/>
+                                </group>
+                                <group string="Avancement Réalisé">
+                                    <field name="progress_global" widget="progressbar"/>
+                                    <field name="cumul_travaux_ht"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Taux &amp; Avances" name="taux_page">
+                            <group>
+                                <group string="Taux Contractuels (Pré-remplissage des décomptes)">
+                                    <field name="advance_rate" readonly="state != 'draft'"/>
+                                    <field name="reimbursement_rate" readonly="state != 'draft'"/>
+                                    <field name="warranty_rate" readonly="state != 'draft'"/>
+                                    <field name="source_rate" readonly="state != 'draft'"/>
+                                    <field name="arcop_type" readonly="state != 'draft'"/>
+                                    <field name="arcop_rate" invisible="arcop_type != 'rate'" readonly="state != 'draft'"/>
+                                    <field name="arcop_fixed_amount" invisible="arcop_type != 'fixed'" readonly="state != 'draft'"/>
+                                </group>
+                                <group string="Suivi de l'Avance">
+                                    <field name="advance_total"/>
+                                    <field name="advance_reimbursed_total"/>
+                                    <field name="advance_remaining" class="oe_subtotal_footer_separator"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Historique des Décomptes" name="decomptes_page">
+                            <field name="decompte_ids" readonly="1">
+                                <tree string="Décomptes" decoration-info="state == 'draft'" decoration-success="state in ('validated', 'invoiced', 'paid')">
+                                    <field name="number"/>
+                                    <field name="date"/>
+                                    <field name="progress_rate" string="Avancement (%)"/>
+                                    <field name="current_decompte_ht" sum="Total Décomptes HT"/>
+                                    <field name="current_advance_reimbursement" sum="Total Remboursements"/>
+                                    <field name="ht_after_reimbursement" sum="Total HT après remb."/>
+                                    <field name="total_retentions" sum="Total Retenues"/>
+                                    <field name="net_to_pay" sum="Total Net à Payer"/>
+                                    <field name="is_final" widget="boolean_toggle"/>
+                                    <field name="state" widget="badge"/>
+                                    <field name="move_id" string="Facture"/>
+                                    <field name="currency_id" column_invisible="True"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vue Recherche Marché -->
+    <record id="view_btp_market_search" model="ir.ui.view">
+        <field name="name">btp.market.search</field>
+        <field name="model">btp.market</field>
+        <field name="arch" type="xml">
+            <search string="Recherche Marchés">
+                <field name="name" string="Référence"/>
+                <field name="partner_id" string="Client"/>
+                <field name="objet" string="Objet"/>
+                <separator/>
+                <filter name="filter_in_progress" string="En cours" domain="[('state', '=', 'in_progress')]"/>
+                <filter name="filter_draft" string="Brouillon" domain="[('state', '=', 'draft')]"/>
+                <filter name="filter_done" string="Clôturé" domain="[('state', '=', 'done')]"/>
+                <group expand="0" string="Regrouper par">
+                    <filter name="group_partner" string="Client" context="{'group_by': 'partner_id'}"/>
+                    <filter name="group_state" string="État" context="{'group_by': 'state'}"/>
+                    <filter name="group_date" string="Date" context="{'group_by': 'date_market'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action Marchés -->
+    <record id="action_btp_market" model="ir.actions.act_window">
+        <field name="name">Grands marchés BTP</field>
+        <field name="res_model">btp.market</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_btp_market_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Créez votre premier Grand Marché BTP !
+            </p>
+            <p>
+                Gérez vos grands marchés de travaux avec décomptes périodiques N°1, N°2..., décompte final, avancement, retenues de garantie et facturation automatique.
+            </p>
+        </field>
+    </record>
+</odoo>

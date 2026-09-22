@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Activation et configuration des devises : FCFA, EUR, USD -->
+    <record id="base.XOF" model="res.currency">
+        <field name="active" eval="True"/>
+        <field name="symbol">FCFA</field>
+        <field name="currency_unit_label">Franc CFA</field>
+        <field name="sequence">1</field>
+    </record>
+
+    <record id="base.XAF" model="res.currency">
+        <field name="active" eval="True"/>
+        <field name="symbol">FCFA</field>
+        <field name="currency_unit_label">Franc CFA</field>
+        <field name="sequence">2</field>
+    </record>
+
+    <record id="base.EUR" model="res.currency">
+        <field name="active" eval="True"/>
+        <field name="symbol">€</field>
+        <field name="currency_unit_label">Euro</field>
+        <field name="sequence">10</field>
+    </record>
+
+    <record id="base.USD" model="res.currency">
+        <field name="active" eval="True"/>
+        <field name="symbol">$</field>
+        <field name="currency_unit_label">Dollar</field>
+        <field name="sequence">20</field>
+    </record>
+
+    <!-- Activation automatique du multi-devises pour tous les utilisateurs -->
+    <record id="base.group_user" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('base.group_multi_currency'))]"/>
+    </record>
+
+    <!-- Initialisation automatique du FCFA comme devise par défaut -->
+    <function model="btp.market" name="_init_currencies_and_defaults"/>
+</odoo>

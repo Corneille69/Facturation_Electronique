@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vue Liste / Tree Petit Marché -->
+    <record id="view_btp_petit_marche_tree" model="ir.ui.view">
+        <field name="name">btp.petit.marche.tree</field>
+        <field name="model">btp.petit.marche</field>
+        <field name="arch" type="xml">
+            <tree string="Petits Marchés BTP"
+                  decoration-info="state == 'draft'"
+                  decoration-primary="state == 'computed'"
+                  decoration-warning="state == 'validated'"
+                  decoration-success="state in ('invoiced', 'paid')"
+                  decoration-muted="state == 'cancel'">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="date"/>
+                <field name="amount_total" sum="Total TTC"/>
+                <field name="amount_untaxed" sum="Total HT"/>
+                <field name="advance_rate" string="Avance (%)"/>
+                <field name="advance_amount_untaxed" sum="Total Avances HT"/>
+                <field name="amount_to_pay" sum="Total à Payer" class="fw-bold text-primary"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-primary="state == 'computed'"
+                       decoration-warning="state == 'validated'"
+                       decoration-success="state in ('invoiced', 'paid')"
+                       decoration-muted="state == 'cancel'"/>
+                <field name="move_id" string="Facture"/>
+                <field name="payment_state" widget="badge"
+                       decoration-success="payment_state == 'paid'"
+                       decoration-warning="payment_state == 'partial'"
+                       decoration-danger="payment_state == 'not_paid'"/>
+                <field name="currency_id" optional="show"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Vue Formulaire Petit Marché -->
+    <record id="view_btp_petit_marche_form" model="ir.ui.view">
+        <field name="name">btp.petit.marche.form</field>
+        <field name="model">btp.petit.marche</field>
+        <field name="arch" type="xml">
+            <form string="Petit Marché BTP">
+                <header>
+                    <button name="action_compute" string="Calculer" type="object" class="btn-secondary" invisible="state != 'draft'"/>
+                    <button name="action_validate" string="Valider le marché" type="object" class="btn-success" invisible="state not in ('draft', 'computed')"/>
+                    <button name="action_create_invoice" string="Créer Facture Odoo" type="object" class="btn-primary" invisible="state != 'validated' or move_id"/>
+                    <button name="action_print_report" string="Imprimer Facture Avance" type="object" class="btn-secondary" icon="fa-print"/>
+                    <button name="action_draft" string="Remettre en brouillon" type="object" invisible="state not in ('computed', 'cancel')"/>
+                    <button name="action_cancel" string="Annuler" type="object" invisible="state in ('paid', 'cancel')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,computed,validated,invoiced,paid"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_invoice" type="object" class="oe_stat_button" icon="fa-pencil-square-o" invisible="not move_id">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Facture Odoo</span>
+                                <field name="payment_state" widget="badge"/>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <label for="name" string="Référence du Marché"/>
+                        <h1>
+                            <field name="name" placeholder="Ex: PM-2025/001" readonly="state not in ('draft', 'computed')"/>
+                        </h1>
+                    </div>
+
+                    <!-- SECTION 1 : INFORMATIONS GÉNÉRALES -->
+                    <group string="INFORMATIONS GÉNÉRALES">
+                        <group>
+                            <field name="partner_id" readonly="state not in ('draft', 'computed')"/>
+                            <field name="date" readonly="state not in ('draft', 'computed')"/>
+                            <field name="invoice_ref" readonly="1" invisible="not move_id"/>
+                        </group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company" readonly="state not in ('draft', 'computed')"/>
+                            <field name="currency_id" readonly="state not in ('draft', 'computed')" options="{'no_create': True, 'no_open': True}"/>
+                        </group>
+                    </group>
+
+                    <group string="OBJET DES TRAVAUX">
+                        <field name="objet" placeholder="Décrivez les travaux faisant l'objet de ce petit marché..." nolabel="1" readonly="state not in ('draft', 'computed')"/>
+                    </group>
+
+                    <notebook>
+                        <!-- PAGE 1 : TABLEAU FINANCIER COMPLET DE L'AVANCE -->
+                        <page string="Tableau des Montants &amp; Avance" name="montants_avance_page">
+                            <group string="SAISIE DES PARAMÈTRES DU MARCHÉ">
+                                <group string="Marché Initial">
+                                    <field name="amount_total" string="Montant TTC (Saisi)" class="fw-bold fs-5 text-dark" readonly="state not in ('draft', 'computed')"/>
+                                    <field name="amount_untaxed" string="Montant HT" class="fw-bold" readonly="state not in ('draft', 'computed')"/>
+                                    <field name="tva_rate" string="Taux TVA"/>
+                                    <field name="amount_tva" string="Montant TVA"/>
+                                </group>
+                                <group string="Avance Accordée">
+                                    <label for="advance_rate" string="Taux d'avance"/>
+                                    <div class="o_row">
+                                        <field name="advance_rate" placeholder="Ex: 50.00" readonly="state not in ('draft', 'computed')"/>
+                                        <span>%</span>
+                                    </div>
+                                    <field name="advance_amount_untaxed" string="Avance HT" class="fw-bold"/>
+                                    <field name="advance_tva" string="TVA sur l'avance (18 %)"/>
+                                    <field name="amount_to_pay" string="MONTANT TOTAL À PAYER" class="oe_subtotal_footer_separator text-primary fw-bold fs-4"/>
+                                </group>
+                            </group>
+                            <separator string="TABLEAU OFFICIEL DES ÉLÉMENTS DE LA FACTURE"/>
+                            <field name="financial_table_html" widget="html" readonly="1" nolabel="1"/>
+                        </page>
+
+                        <!-- PAGE 2 : FACTURATION ODOO & CERTIFICATION -->
+                        <page string="Facturation Odoo &amp; Certification" name="facturation_page">
+                            <group>
+                                <group string="Liaison Comptable Odoo">
+                                    <field name="move_id" readonly="1"/>
+                                    <field name="payment_state" widget="badge"/>
+                                </group>
+                                <group string="Code QR Certification Électronique">
+                                    <field name="qr_code_image" widget="image" class="oe_avatar" readonly="1"/>
+                                </group>
+                            </group>
+                            <group string="Données brutes de certification" invisible="not qr_code_data">
+                                <field name="qr_code_data" readonly="1" nolabel="1"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vue Recherche Petit Marché -->
+    <record id="view_btp_petit_marche_search" model="ir.ui.view">
+        <field name="name">btp.petit.marche.search</field>
+        <field name="model">btp.petit.marche</field>
+        <field name="arch" type="xml">
+            <search string="Recherche Petits Marchés">
+                <field name="name" string="Référence"/>
+                <field name="partner_id" string="Client"/>
+                <field name="objet" string="Objet"/>
+                <separator/>
+                <filter name="filter_draft" string="Brouillon" domain="[('state', '=', 'draft')]"/>
+                <filter name="filter_validated" string="Validé" domain="[('state', '=', 'validated')]"/>
+                <filter name="filter_invoiced" string="Facturé" domain="[('state', '=', 'invoiced')]"/>
+                <filter name="filter_paid" string="Payé" domain="[('state', '=', 'paid')]"/>
+                <group expand="0" string="Regrouper par">
+                    <filter name="group_partner" string="Client" context="{'group_by': 'partner_id'}"/>
+                    <filter name="group_state" string="État" context="{'group_by': 'state'}"/>
+                    <filter name="group_date" string="Date" context="{'group_by': 'date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action Fenêtre Petit Marché -->
+    <record id="action_btp_petit_marche" model="ir.actions.act_window">
+        <field name="name">Petits marchés</field>
+        <field name="res_model">btp.petit.marche</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_btp_petit_marche_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Créer un nouveau Petit Marché
+            </p>
+            <p>
+                Gérez vos petits marchés sans décomptes avec tableau financier d'avance et facturation directe Odoo.
+            </p>
+        </field>
+    </record>
+</odoo>
