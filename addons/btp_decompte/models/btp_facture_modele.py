@@ -46,6 +46,8 @@ class BtpFactureModele(models.Model):
                 'default_facture_signatory': self.signatory_default or 'Signataire',
                 'default_decompte_btp_city': self.city_default or 'Ouagadougou',
                 'default_decompte_btp_signataire_titre': self.signatory_default or 'Le Bureau',
+                'default_decompte_trv_city': self.city_default or 'Ouagadougou',
+                'default_decompte_trv_signataire_bureau': self.signatory_default or 'Le Bureau',
             }
         }
 
@@ -132,9 +134,18 @@ class BtpFactureModele(models.Model):
                 'signatory_default': 'Le Bureau',
             },
             {
+                'code': 'decompte_travaux_btp',
+                'name': 'Décompte de travaux BTP',
+                'sequence': 7,
+                'description': 'Facture officielle de Décompte de travaux BTP conforme au modèle officiel : montant brut, encadré des retenues opérées (avance, décomptes précédents ou néant, retenue garantie 5%, ARCOP 0,4%), Net HTVA, TVA 18%, Net TTC, retenue impôt 5% et NET A PAYER.',
+                'image_preview': load_img('modele_decompte_travaux_btp.png'),
+                'city_default': 'Ouagadougou',
+                'signatory_default': 'Le Bureau',
+            },
+            {
                 'code': 'standard',
                 'name': 'Modèle Facture Standard Odoo',
-                'sequence': 7,
+                'sequence': 8,
                 'description': 'Modèle de facturation standard avec lignes d’articles et totaux classiques.',
                 'image_preview': load_img('modele_standard.png'),
                 'city_default': 'Ouagadougou',

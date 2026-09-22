@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_decompte_travaux_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <div class="article" style="font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 11.5px; color: #000; padding: 10px 15px; line-height: 1.35;">
+
+                    <!-- EN-TÊTE SUPÉRIEUR (LOGO OU COORDONNÉES) -->
+                    <table t-if="o.company_id.logo or o.company_id.name" style="width: 100%; border-collapse: collapse; margin-bottom: 6px;">
+                        <tr>
+                            <td style="width: 20%; vertical-align: middle; text-align: left;">
+                                <img t-if="o.company_id.logo" t-att-src="image_data_uri(o.company_id.logo)" style="max-height: 60px; max-width: 140px;" alt="Logo"/>
+                            </td>
+                            <td style="width: 60%; vertical-align: middle; text-align: center;">
+                                <div style="font-size: 13.5px; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase;">
+                                    <t t-esc="o.company_id.name"/>
+                                </div>
+                                <div style="font-size: 9.5px; color: #333; margin-top: 2px;">
+                                    <t t-if="o.company_id.street"><t t-esc="o.company_id.street"/>, </t>
+                                    <t t-if="o.company_id.city"><t t-esc="o.company_id.city"/> - </t>
+                                    <t t-if="o.company_id.phone">Tél : <t t-esc="o.company_id.phone"/> | </t>
+                                    <t t-if="o.company_id.email">Email : <t t-esc="o.company_id.email"/></t>
+                                </div>
+                                <div t-if="o.company_id.ifu or o.company_id.vat" style="font-size: 9px; color: #444;">
+                                    <strong>IFU : </strong><t t-esc="o.company_id.ifu or o.company_id.vat"/>
+                                    <t t-if="o.company_id.rccm"> | <strong>RCCM : </strong><t t-esc="o.company_id.rccm"/></t>
+                                </div>
+                            </td>
+                            <td style="width: 20%; text-align: right; vertical-align: middle;">
+                                <img t-if="o.qr_code_image" t-att-src="'data:image/png;base64,%s' % o.qr_code_image.decode('utf-8')" style="width: 55px; height: 55px; border: 1px solid #333; padding: 2px;" alt="QR Code"/>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div t-if="o.company_id.logo or o.company_id.name" style="border-bottom: 1px solid #666; margin-bottom: 12px;"></div>
+
+                    <!-- LIEU ET DATE (EN HAUT À DROITE EXACTEMENT COMME SUR LA PHOTO) -->
+                    <div style="text-align: right; font-size: 11.5px; margin-bottom: 12px; margin-right: 5px;">
+                        <span style="font-weight: 500;">
+                            <t t-esc="o.decompte_trv_city or o.facture_city or 'Ouagadougou'"/>, le : 
+                            <t t-if="o.invoice_date">
+                                <span style="font-weight: bold;"><t t-esc="o.invoice_date.strftime('%d/%m/%Y')"/></span>
+                            </t>
+                            <t t-else="">
+                                ............................................................
+                            </t>
+                        </span>
+                    </div>
+
+                    <!-- TITRE DU DOCUMENT (FACTURE N°...) -->
+                    <div style="text-align: center; margin-bottom: 16px;">
+                        <span style="font-size: 15px; font-weight: bold; text-decoration: underline; letter-spacing: 0.5px;">
+                            FACTURE N° : <t t-esc="o.name or '..................................................'"/>
+                        </span>
+                    </div>
+
+                    <!-- BLOC INFORMATIONS GÉNÉRALES -->
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 11px; line-height: 1.55;">
+                        <tr>
+                            <td style="width: 32%; font-weight: bold; text-decoration: underline; vertical-align: top;">
+                                OBJET :
+                            </td>
+                            <td style="width: 68%; vertical-align: top;">
+                                <t t-if="o.decompte_trv_objet">
+                                    <span style="font-weight: 600;"><t t-esc="o.decompte_trv_objet"/></span>
+                                </t>
+                                <t t-else="">-</t>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: bold; text-decoration: underline; vertical-align: top;">
+                                Doit :
+                            </td>
+                            <td style="vertical-align: top;">
+                                <span style="font-weight: bold; text-transform: uppercase;">
+                                    <t t-esc="o.partner_id.name or '-'"/>
+                                </span>
+                                <t t-if="o.partner_id.street">
+                                    <span style="font-size: 10px; color: #444;"> - <t t-esc="o.partner_id.street"/></span>
+                                </t>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: bold; vertical-align: top;">
+                                Marché N° :
+                            </td>
+                            <td style="vertical-align: top;">
+                                <t t-esc="o.decompte_trv_marche_num or '-'"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="vertical-align: top;">
+                                Financement :
+                            </td>
+                            <td style="vertical-align: top;">
+                                <t t-esc="o.decompte_trv_financement or '-'"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="vertical-align: top;">
+                                Décompte :
+                            </td>
+                            <td style="vertical-align: top; font-weight: bold;">
+                                <t t-esc="o.decompte_trv_numero or 'Décompte N° 1'"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="vertical-align: top;">
+                                Montant total marché en HT :
+                            </td>
+                            <td style="vertical-align: top; font-weight: bold;">
+                                <t t-esc="'{0:,.0f}'.format(o.decompte_trv_montant_marche_ht).replace(',', ' ')"/> <t t-esc="o.currency_id.symbol or 'FCFA'"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="vertical-align: top;">
+                                Montant de la TVA 18% :
+                            </td>
+                            <td style="vertical-align: top;">
+                                <t t-esc="'{0:,.0f}'.format(o.decompte_trv_tva_marche).replace(',', ' ')"/> <t t-esc="o.currency_id.symbol or 'FCFA'"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="vertical-align: top;">
+                                Montant total marché en TTC :
+                            </td>
+                            <td style="vertical-align: top; font-weight: bold;">
+                                <t t-esc="'{0:,.0f}'.format(o.decompte_trv_montant_marche_ttc).replace(',', ' ')"/> <t t-esc="o.currency_id.symbol or 'FCFA'"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="vertical-align: top;">
+                                Avancement :
+                            </td>
+                            <td style="vertical-align: top; font-weight: bold;">
+                                <t t-esc="'{0:g}'.format(o.decompte_trv_avancement_taux)"/> %
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- SECTION MONTANT BRUT DU DÉCOMPTE (AVEC CADRE DOUBLE BORDURE COMME SUR LA PHOTO) -->
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
+                        <tr>
+                            <td style="width: 65%; font-weight: bold; font-size: 12.5px; text-decoration: underline; vertical-align: middle;">
+                                Montant brut du décompte :
+                            </td>
+                            <td style="width: 35%; text-align: right; vertical-align: middle;">
+                                <div style="display: inline-block; border: 3px double #000; padding: 5px 18px; font-size: 13.5px; font-weight: bold; min-width: 130px; text-align: right;">
+                                    <t t-esc="'{0:,.0f}'.format(o.decompte_trv_montant_brut).replace(',', ' ')"/>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- SECTION RETENUES OPÉRÉES -->
+                    <div style="font-weight: bold; font-size: 12px; text-decoration: underline; margin-bottom: 4px;">
+                        Retenues opérées :
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; border: 1.5px solid #000; margin-bottom: 0px; font-size: 11px;">
+                        <tr style="border-bottom: 1px solid #000;">
+                            <td style="padding: 5px 8px; width: 70%; vertical-align: middle;">
+                                Avance de démarrage perçue :
+                            </td>
+                            <td style="padding: 5px 8px; width: 30%; text-align: right; border-left: 1.5px solid #000; vertical-align: middle;">
+                                <t t-if="o.decompte_trv_avance_percue > 0">
+                                    <t t-esc="'{0:,.0f}'.format(o.decompte_trv_avance_percue).replace(',', ' ')"/>
+                                </t>
+                                <t t-else="">-</t>
+                            </td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #000;">
+                            <td style="padding: 5px 8px; vertical-align: middle;">
+                                Décomptes précédents perçus : <span style="font-style: italic; font-size: 10px;">(Néant; l'avance de démarrage n'est pas un décompte)</span>
+                            </td>
+                            <td style="padding: 5px 8px; text-align: right; border-left: 1.5px solid #000; vertical-align: middle;">
+                                <t t-if="o.decompte_trv_decomptes_precedents_ht > 0">
+                                    <t t-esc="'{0:,.0f}'.format(o.decompte_trv_decomptes_precedents_ht).replace(',', ' ')"/>
+                                </t>
+                                <t t-else="">Néant</t>
+                            </td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #000;">
+                            <td style="padding: 5px 8px; vertical-align: middle;">
+                                Retenue précédente de garantie : <span style="font-style: italic; font-size: 10px;">(5% du montant brut du décompte)</span>
+                            </td>
+                            <td style="padding: 5px 8px; text-align: right; border-left: 1.5px solid #000; vertical-align: middle;">
+                                <t t-esc="'{0:,.0f}'.format(o.decompte_trv_retenue_garantie).replace(',', ' ')"/>
+                            </td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #000;">
+                            <td style="padding: 5px 8px; vertical-align: middle;">
+                                Autres retenue <span style="font-style: italic; font-size: 10px;">(ARCOP 0,4% du montant HTVA du décompte)</span>
+                            </td>
+                            <td style="padding: 5px 8px; text-align: right; border-left: 1.5px solid #000; vertical-align: middle;">
+                                <t t-esc="'{0:,.0f}'.format(o.decompte_trv_retenue_arcop).replace(',', ' ')"/>
+                            </td>
+                        </tr>
+                        <tr style="background-color: #f9f9f9; font-weight: bold;">
+                            <td style="padding: 6px 8px; text-align: right; text-decoration: underline; vertical-align: middle;">
+                                Total retenues :
+                            </td>
+                            <td style="padding: 6px 8px; text-align: right; border-left: 1.5px solid #000; vertical-align: middle;">
+                                <t t-esc="'{0:,.0f}'.format(o.decompte_trv_total_retenues).replace(',', ' ')"/>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- GRILLE FINALE DES CALCULS (COLLÉE DIRECTEMENT SOUS LES RETENUES) -->
+                    <table style="width: 100%; border-collapse: collapse; border: 1.5px solid #000; border-top: none; margin-bottom: 15px; font-size: 11px;">
+                        <tr style="border-bottom: 1px solid #000;">
+                            <td style="padding: 5px 8px; width: 70%; font-weight: bold; vertical-align: middle;">
+                                Montant net décompte FCFA en HTVA :
+                            </td>
+                            <td style="padding: 5px 8px; width: 30%; text-align: right; border-left: 1.5px solid #000; font-weight: bold; vertical-align: middle;">
+                                <t t-esc="'{0:,.0f}'.format(o.decompte_trv_net_htva).replace(',', ' ')"/>
+                            </td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #000;">
+                            <td style="padding: 5px 8px; font-weight: bold; vertical-align: middle;">
+                                Montant de la TVA 18% :
+                            </td>
+                            <td style="padding: 5px 8px; text-align: right; border-left: 1.5px solid #000; vertical-align: middle;">
+                                <t t-esc="'{0:,.0f}'.format(o.decompte_trv_tva_decompte).replace(',', ' ')"/>
+                            </td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #000;">
+                            <td style="padding: 5px 8px; font-weight: bold; vertical-align: middle;">
+                                Montant net décompte FCFA en TTC :
+                            </td>
+                            <td style="padding: 5px 8px; text-align: right; border-left: 1.5px solid #000; font-weight: bold; vertical-align: middle;">
+                                <t t-esc="'{0:,.0f}'.format(o.decompte_trv_net_ttc).replace(',', ' ')"/>
+                            </td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #000;">
+                            <td style="padding: 5px 8px; vertical-align: middle;">
+                                Retenue de 5% pour impôt sur montant net décompte :
+                            </td>
+                            <td style="padding: 5px 8px; text-align: right; border-left: 1.5px solid #000; vertical-align: middle;">
+                                <t t-esc="'{0:,.0f}'.format(o.decompte_trv_retenue_impot_5).replace(',', ' ')"/>
+                            </td>
+                        </tr>
+                        <tr style="border-bottom: 1.5px solid #000;">
+                            <td style="padding: 5px 8px; vertical-align: middle;">
+                                Retenue ARCOP de 0,4% :
+                            </td>
+                            <td style="padding: 5px 8px; text-align: right; border-left: 1.5px solid #000; vertical-align: middle;">
+                                <t t-esc="'{0:,.0f}'.format(o.decompte_trv_retenue_arcop).replace(',', ' ')"/>
+                            </td>
+                        </tr>
+                        <tr style="background-color: #f2f2f2; font-weight: bold;">
+                            <td style="padding: 7px 8px; text-align: center; font-size: 12.5px; letter-spacing: 0.5px; vertical-align: middle;">
+                                NET A PAYER
+                            </td>
+                            <td style="padding: 7px 8px; text-align: right; border-left: 1.5px solid #000; font-size: 13.5px; vertical-align: middle;">
+                                <t t-esc="'{0:,.0f}'.format(o.decompte_trv_net_a_payer).replace(',', ' ')"/>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- ARRÊTÉ EN TOUTES LETTRES -->
+                    <div style="font-size: 11px; margin-bottom: 35px; line-height: 1.45;">
+                        <span style="font-weight: bold;">Arrêté le présent paiement à la somme de : </span>
+                        <span style="text-transform: uppercase; font-weight: bold;">
+                            <t t-esc="o.decompte_trv_net_lettres"/>
+                        </span>
+                    </div>
+
+                    <!-- ZONES DE SIGNATURE : LE BUREAU (À GAUCHE) ET LE MAÎTRE D'OUVRAGE (À DROITE) -->
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                        <tr>
+                            <td style="width: 45%; text-align: left; vertical-align: top;">
+                                <div style="font-weight: bold; font-size: 12px; text-decoration: underline; margin-bottom: 60px;">
+                                    <t t-esc="o.decompte_trv_signataire_bureau or 'Le Bureau'"/>
+                                </div>
+                                <div t-if="o.decompte_trv_nom_bureau" style="font-weight: bold; font-size: 11px;">
+                                    <t t-esc="o.decompte_trv_nom_bureau"/>
+                                </div>
+                            </td>
+                            <td style="width: 10%;"></td>
+                            <td style="width: 45%; text-align: right; vertical-align: top;">
+                                <div style="font-weight: bold; font-size: 12px; text-decoration: underline; margin-bottom: 60px;">
+                                    <t t-esc="o.decompte_trv_signataire_mo or 'Le Maître d\'Ouvrage'"/>
+                                </div>
+                                <div t-if="o.decompte_trv_nom_mo" style="font-weight: bold; font-size: 11px;">
+                                    <t t-esc="o.decompte_trv_nom_mo"/>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <!-- Redirection automatique de l'impression standard Facture Odoo vers le template Décompte Travaux BTP -->
+    <template id="report_invoice_inherit_decompte_travaux_btp" inherit_id="account.report_invoice">
+        <xpath expr="//t[@t-call='account.report_invoice_document']" position="before">
+            <t t-if="o.facture_modele_code == 'decompte_travaux_btp'" t-call="btp_decompte.report_decompte_travaux_document" t-lang="lang">
+                <t t-set="docs" t-value="o"/>
+            </t>
+        </xpath>
+    </template>
+</odoo>

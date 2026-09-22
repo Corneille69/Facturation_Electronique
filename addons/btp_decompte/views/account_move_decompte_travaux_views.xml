@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Extension de la vue formulaire Facture pour le modèle Décompte de travaux BTP -->
+    <record id="view_move_form_inherit_decompte_travaux_btp" model="ir.ui.view">
+        <field name="name">account.move.form.inherit.decompte.travaux.btp</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="priority">60</field>
+        <field name="arch" type="xml">
+
+            <!-- 1. BOUTON D'IMPRESSION DANS L'EN-TÊTE -->
+            <xpath expr="//header" position="inside">
+                <button name="action_print_decompte_travaux"
+                        string="Imprimer Décompte Travaux BTP (PDF)"
+                        type="object"
+                        class="btn-primary fw-bold"
+                        icon="fa-print"
+                        invisible="facture_modele_code != 'decompte_travaux_btp'"/>
+            </xpath>
+
+            <!-- 2. MASQUER LE BOUTON BORDEREAU ET L'ONGLET BORDEREAU -->
+            <xpath expr="//button[@name='action_print_facture_bordereau']" position="attributes">
+                <attribute name="invisible">decompte_id or petit_marche_id or facture_modele_code in ('honoraires_consultant', 'honoraires_etudes', 'decompte_btp', 'decompte_travaux_btp')</attribute>
+            </xpath>
+
+            <xpath expr="//page[@name='facture_modele_page']" position="attributes">
+                <attribute name="invisible">decompte_id or petit_marche_id or facture_modele_code in ('honoraires_consultant', 'honoraires_etudes', 'decompte_btp', 'decompte_travaux_btp')</attribute>
+            </xpath>
+
+            <!-- 3. NOUVEL ONGLET DÉDIÉ : DÉCOMPTE DE TRAVAUX BTP -->
+            <xpath expr="//page[@id='invoice_tab']" position="before">
+                <page string="Décompte de travaux BTP"
+                      name="decompte_travaux_btp_page"
+                      invisible="facture_modele_code != 'decompte_travaux_btp'">
+
+                    <div class="row">
+
+                        <!-- VOLET GAUCHE (4 COLONNES) : GUIDAGE VISUEL & MINIATURE -->
+                        <div class="col-md-4 border-end pe-3">
+                            <div class="alert alert-dark py-2 px-3 mb-3 text-white" style="background-color: #2c3e50;" role="status">
+                                <strong><i class="fa fa-briefcase me-1" title="Modèle"/> Décompte de travaux BTP</strong><br/>
+                                <span class="small text-light">Facture officielle avec encadré du montant brut, retenues opérées, Net HTVA, TVA 18%, Net TTC, retenue impôt 5% et NET A PAYER.</span>
+                            </div>
+
+                            <group>
+                                <field name="facture_modele_id" options="{'no_create': True}" widget="many2one" string="Modèle Choisi"/>
+                            </group>
+
+                            <div class="text-center p-2 bg-light border rounded shadow-sm mt-2">
+                                <field name="facture_modele_image" widget="image" class="img-fluid rounded" style="max-height: 420px; object-fit: contain; width: 100%;" readonly="1"/>
+                            </div>
+                            <div class="text-muted small text-center mt-2 fst-italic">
+                                Modèle officiel reproduit fidèlement à l'identique
+                            </div>
+
+                            <div class="card mt-3 border-0 bg-light shadow-sm">
+                                <div class="card-body p-3">
+                                    <h6 class="text-primary fw-bold mb-2">
+                                        <i class="fa fa-info-circle me-1" title="Guide"/> Guide d'utilisation
+                                    </h6>
+                                    <ol class="small ps-3 mb-0" style="line-height: 1.5;">
+                                        <li>Sélectionnez optionnellement un <strong>Marché BTP</strong> pour préremplir les données ou saisissez-les librement.</li>
+                                        <li>Indiquez le <strong>Numéro du Décompte</strong> (ex: <em>Décompte N° 1</em>, <em>Décompte N° 2</em>...).</li>
+                                        <li>Saisissez le <strong>Montant Marché HT</strong> et le <strong>Taux d'Avancement (%)</strong>.</li>
+                                        <li>Renseignez le montant des <strong>Décomptes précédents</strong> (ou laissez 0 si Décompte 1).</li>
+                                        <li>Tous les calculs officiels (Montant Brut, Retenue garantie 5%, ARCOP 0,4%, Net HTVA, TVA 18%, Net TTC, Retenue impôt 5%, <strong>NET A PAYER</strong>) se font en temps réel !</li>
+                                        <li>Cliquez sur <strong>« Imprimer Décompte Travaux BTP »</strong> pour générer le PDF officiel.</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- VOLET DROIT (8 COLONNES) : SAISIE & CALCULS DYNAMIQUES -->
+                        <div class="col-md-8 ps-3">
+
+                            <!-- BLOC 1 : EN-TÊTE DU MARCHÉ & DÉCOMPTE -->
+                            <div class="card mb-3 border-0 shadow-sm bg-light">
+                                <div class="card-header text-white fw-bold py-2" style="background-color: #17252a;">
+                                    <i class="fa fa-file-text-o me-2" title="Marché"/> Renseignements Généraux &amp; Identification du Décompte
+                                </div>
+                                <div class="card-body py-2">
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <span class="small fw-bold text-primary">Lier à un Marché existant (Optionnel) :</span>
+                                            <field name="decompte_trv_market_id" options="{'no_create': True}" placeholder="Choisir un marché BTP..."/>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <span class="small fw-bold text-dark">DÉCOMPTE :</span>
+                                            <field name="decompte_trv_numero" placeholder="Ex: Décompte N° 1"/>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <span class="small fw-bold text-dark">MARCHÉ N° :</span>
+                                            <field name="decompte_trv_marche_num" placeholder="Ex: N° 2026-088/MID/SG/DGI"/>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <span class="small fw-bold text-dark">FINANCEMENT :</span>
+                                            <field name="decompte_trv_financement" placeholder="Ex: Budget de l'État (Exercice 2026)"/>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <span class="small fw-bold text-dark">Ville de facturation :</span>
+                                            <field name="decompte_trv_city" placeholder="Ex: Ouagadougou"/>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <span class="small fw-bold text-dark">Signataire Bureau :</span>
+                                            <field name="decompte_trv_signataire_bureau" placeholder="Ex: Le Bureau"/>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <span class="small fw-bold text-dark">Signataire M.O. :</span>
+                                            <field name="decompte_trv_signataire_mo" placeholder="Ex: Le Maître d'Ouvrage"/>
+                                        </div>
+                                        <div class="col-12">
+                                            <span class="small fw-bold text-dark">OBJET :</span>
+                                            <field name="decompte_trv_objet" placeholder="Ex: TRAVAUX DE RÉHABILITATION..." rows="2"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- BLOC 2 : MONTANTS DU MARCHÉ & AVANCEMENT -->
+                            <div class="card mb-3 border-primary shadow-sm">
+                                <div class="card-header bg-primary text-white fw-bold py-2 d-flex justify-content-between align-items-center">
+                                    <span><i class="fa fa-calculator me-2" title="Marché"/> Montants Globaux du Marché &amp; Taux d'Avancement</span>
+                                    <span class="badge bg-light text-primary">TVA Fixe 18%</span>
+                                </div>
+                                <div class="card-body py-2">
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <span class="o_form_label fw-bold text-primary mb-1 d-block">Montant total marché en HT :</span>
+                                            <field name="decompte_trv_montant_marche_ht"
+                                                   widget="monetary"
+                                                   options="{'currency_field': 'currency_id'}"
+                                                   class="fw-bold fs-5 text-primary w-100"
+                                                   placeholder="0.00"/>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <span class="o_form_label text-muted mb-1 d-block">Montant de la TVA 18% :</span>
+                                            <field name="decompte_trv_tva_marche"
+                                                   widget="monetary"
+                                                   options="{'currency_field': 'currency_id'}"
+                                                   class="fw-bold fs-5 text-muted w-100"
+                                                   readonly="1"/>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <span class="o_form_label fw-bold text-dark mb-1 d-block">Montant total marché en TTC :</span>
+                                            <field name="decompte_trv_montant_marche_ttc"
+                                                   widget="monetary"
+                                                   options="{'currency_field': 'currency_id'}"
+                                                   class="fw-bold fs-5 text-dark w-100"
+                                                   readonly="1"/>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="p-2 border border-2 border-info rounded bg-light">
+                                                <span class="o_form_label fw-bold text-info mb-1 d-block">
+                                                    <i class="fa fa-percent me-1" title="Avancement"/> Avancement (%) :
+                                                </span>
+                                                <div class="d-flex align-items-center">
+                                                    <field name="decompte_trv_avancement_taux" class="fw-bold fs-4 text-info w-75" placeholder="0.0000"/>
+                                                    <span class="fs-4 fw-bold text-info ms-2">%</span>
+                                                </div>
+                                                <small class="text-muted">Conserve l'intégralité des décimales saisies</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="p-2 border rounded bg-light">
+                                                <span class="o_form_label fw-bold text-secondary mb-1 d-block">Montant cumulé HT :</span>
+                                                <field name="decompte_trv_montant_cumule_ht"
+                                                       widget="monetary"
+                                                       options="{'currency_field': 'currency_id'}"
+                                                       class="fw-bold fs-4 text-secondary w-100"
+                                                       readonly="1"/>
+                                                <small class="text-muted">Marché HT x Avancement (%)</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- BLOC 3 : MONTANT BRUT DU DÉCOMPTE & RETENUES OPÉRÉES -->
+                            <div class="card mb-3 border-dark shadow-sm">
+                                <div class="card-header bg-dark text-white fw-bold py-2 d-flex justify-content-between align-items-center">
+                                    <span><i class="fa fa-money me-2" title="Brut"/> Montant Brut &amp; Section « Retenues opérées »</span>
+                                </div>
+                                <div class="card-body">
+                                    <!-- CADRE DOUBLE BORDURE MONTANT BRUT -->
+                                    <div class="p-3 mb-3 border border-3 rounded bg-white shadow-sm d-flex justify-content-between align-items-center" style="border-style: double !important; border-color: #000 !important;">
+                                        <div>
+                                            <h5 class="fw-bold mb-0 text-dark text-decoration-underline">Montant brut du décompte :</h5>
+                                            <small class="text-muted">(Montant cumulé HT - Décomptes précédents HT)</small>
+                                        </div>
+                                        <div class="text-end">
+                                            <field name="decompte_trv_montant_brut"
+                                                   widget="monetary"
+                                                   options="{'currency_field': 'currency_id'}"
+                                                   class="fw-bold fs-3 text-dark"
+                                                   readonly="1"/>
+                                        </div>
+                                    </div>
+
+                                    <div class="row g-3">
+                                        <!-- Décomptes précédents -->
+                                        <div class="col-md-6">
+                                            <div class="p-2 border rounded bg-light">
+                                                <span class="fw-bold small text-dark d-block">Décomptes précédents perçus (HT) :</span>
+                                                <field name="decompte_trv_decomptes_precedents_ht"
+                                                       widget="monetary"
+                                                       options="{'currency_field': 'currency_id'}"
+                                                       class="fw-bold fs-5 text-dark w-100"
+                                                       placeholder="0.00"/>
+                                                <small class="text-muted">Néant / 0 si premier décompte</small>
+                                            </div>
+                                        </div>
+                                        <!-- Avance perçue -->
+                                        <div class="col-md-6">
+                                            <div class="p-2 border rounded bg-light">
+                                                <span class="fw-bold small text-dark d-block">Avance de démarrage perçue :</span>
+                                                <field name="decompte_trv_avance_percue"
+                                                       widget="monetary"
+                                                       options="{'currency_field': 'currency_id'}"
+                                                       class="fw-bold fs-5 text-dark w-100"
+                                                       placeholder="0.00"/>
+                                                <small class="text-muted">L'avance n'est pas un décompte</small>
+                                            </div>
+                                        </div>
+
+                                        <!-- Retenue de garantie 5% -->
+                                        <div class="col-md-6">
+                                            <div class="p-2 border rounded bg-light">
+                                                <span class="fw-bold small text-danger d-block">Retenue de garantie (5% du brut) :</span>
+                                                <field name="decompte_trv_retenue_garantie"
+                                                       widget="monetary"
+                                                       options="{'currency_field': 'currency_id'}"
+                                                       class="fw-bold fs-5 text-danger w-100"
+                                                       readonly="1"/>
+                                            </div>
+                                        </div>
+                                        <!-- Retenue ARCOP 0,4% -->
+                                        <div class="col-md-6">
+                                            <div class="p-2 border rounded bg-light">
+                                                <span class="fw-bold small text-danger d-block">Retenue ARCOP (0,4% du brut HTVA) :</span>
+                                                <field name="decompte_trv_retenue_arcop"
+                                                       widget="monetary"
+                                                       options="{'currency_field': 'currency_id'}"
+                                                       class="fw-bold fs-5 text-danger w-100"
+                                                       readonly="1"/>
+                                            </div>
+                                        </div>
+                                        <!-- Total retenues -->
+                                        <div class="col-12">
+                                            <div class="p-2 border border-danger rounded bg-white">
+                                                <span class="fw-bold small text-danger text-decoration-underline d-block">Total retenues (Garantie 5% + ARCOP 0,4%) :</span>
+                                                <field name="decompte_trv_total_retenues"
+                                                       widget="monetary"
+                                                       options="{'currency_field': 'currency_id'}"
+                                                       class="fw-bold fs-4 text-danger w-100"
+                                                       readonly="1"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- BLOC 4 : GRILLE FINALE DES CALCULS & NET A PAYER -->
+                            <div class="card mb-3 border-success shadow-sm">
+                                <div class="card-header bg-success text-white fw-bold py-2">
+                                    <i class="fa fa-list-alt me-2" title="Grille"/> Grille des Montants Nets &amp; NET A PAYER
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-2">
+                                        <!-- Net HTVA -->
+                                        <div class="col-md-4">
+                                            <div class="p-2 border rounded bg-light">
+                                                <small class="text-primary fw-bold d-block">Montant net décompte en HTVA :</small>
+                                                <field name="decompte_trv_net_htva" widget="monetary" options="{'currency_field': 'currency_id'}" class="fw-bold fs-5 text-primary" readonly="1"/>
+                                            </div>
+                                        </div>
+                                        <!-- TVA 18% -->
+                                        <div class="col-md-4">
+                                            <div class="p-2 border rounded bg-light">
+                                                <small class="text-muted fw-bold d-block">Montant de la TVA 18% :</small>
+                                                <field name="decompte_trv_tva_decompte" widget="monetary" options="{'currency_field': 'currency_id'}" class="fw-bold fs-5 text-muted" readonly="1"/>
+                                            </div>
+                                        </div>
+                                        <!-- Net TTC -->
+                                        <div class="col-md-4">
+                                            <div class="p-2 border rounded bg-light">
+                                                <small class="text-primary fw-bold d-block">Montant net décompte en TTC :</small>
+                                                <field name="decompte_trv_net_ttc" widget="monetary" options="{'currency_field': 'currency_id'}" class="fw-bold fs-5 text-primary" readonly="1"/>
+                                            </div>
+                                        </div>
+                                        <!-- Retenue 5% Impôt -->
+                                        <div class="col-md-6 mt-2">
+                                            <div class="p-2 border rounded bg-light">
+                                                <small class="text-danger fw-bold d-block">Retenue 5% impôt sur montant net :</small>
+                                                <field name="decompte_trv_retenue_impot_5" widget="monetary" options="{'currency_field': 'currency_id'}" class="fw-bold fs-5 text-danger" readonly="1"/>
+                                            </div>
+                                        </div>
+                                        <!-- Rappel ARCOP 0,4% -->
+                                        <div class="col-md-6 mt-2">
+                                            <div class="p-2 border rounded bg-light">
+                                                <small class="text-danger fw-bold d-block">Retenue ARCOP de 0,4% :</small>
+                                                <field name="decompte_trv_retenue_arcop" widget="monetary" options="{'currency_field': 'currency_id'}" class="fw-bold fs-5 text-danger" readonly="1"/>
+                                            </div>
+                                        </div>
+                                        <!-- NET A PAYER -->
+                                        <div class="col-12 mt-3">
+                                            <div class="p-3 border border-2 border-success rounded bg-success text-white shadow d-flex justify-content-between align-items-center">
+                                                <div class="fs-4 fw-bold letter-spacing-1">NET A PAYER :</div>
+                                                <div>
+                                                    <field name="decompte_trv_net_a_payer" widget="monetary" options="{'currency_field': 'currency_id'}" class="fs-3 fw-bold text-white" readonly="1"/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Arrêté en lettres -->
+                                    <div class="p-2 mt-3 bg-light border rounded text-dark">
+                                        <span class="fw-bold"><i class="fa fa-font me-1" title="Lettres"/> Arrêté le présent paiement à la somme de : </span>
+                                        <field name="decompte_trv_net_lettres" class="fw-bold text-uppercase text-primary"/>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- BLOC 5 : APERÇU DIRECT DU DOCUMENT IMPRIMÉ -->
+                            <div class="mt-3">
+                                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                                    <h6 class="text-dark fw-bold mb-0">
+                                        <i class="fa fa-eye me-1" title="Aperçu"/> Aperçu Direct du Document Tel Qu'Imprimé
+                                    </h6>
+                                    <button name="action_print_decompte_travaux"
+                                            string="Imprimer Décompte (PDF)"
+                                            type="object"
+                                            class="btn btn-sm btn-primary fw-bold"
+                                            icon="fa-print"/>
+                                </div>
+                                <field name="decompte_trv_preview_html" widget="html" readonly="1" nolabel="1"/>
+                            </div>
+
+                        </div>
+                    </div>
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+</odoo>

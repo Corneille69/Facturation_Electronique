@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Action Impression Modèle Décompte de travaux BTP -->
+    <record id="action_report_decompte_travaux" model="ir.actions.report">
+        <field name="name">Décompte de travaux BTP</field>
+        <field name="model">account.move</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">btp_decompte.report_decompte_travaux_document</field>
+        <field name="report_file">btp_decompte.report_decompte_travaux_document</field>
+        <field name="print_report_name">'Decompte_Travaux_%s' % (object.name or 'Document')</field>
+        <field name="paperformat_id" ref="paperformat_btp_facture"/>
+        <field name="binding_model_id" ref="account.model_account_move"/>
+        <field name="binding_type">report</field>
+    </record>
+</odoo>
