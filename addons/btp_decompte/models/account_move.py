@@ -45,6 +45,11 @@ class AccountMove(models.Model):
                 self.facture_deduction_rate = self.facture_modele_id.deduction_rate_default
             if self.facture_modele_id.signatory_default:
                 self.facture_signatory = self.facture_modele_id.signatory_default
+            if self.facture_modele_id.code == 'petit_marche':
+                self.btp_market_type = 'petit'
+            elif self.facture_modele_id.code == 'grand_marche':
+                self.btp_market_type = 'grand'
+
 
     # --- PERSONNALISATION DE LA FACTURE SPÉCIFIQUE (NOUVEAU MODÈLE BORDEREAU) ---
     facture_city = fields.Char(

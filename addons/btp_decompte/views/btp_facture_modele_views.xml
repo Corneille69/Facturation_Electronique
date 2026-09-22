@@ -130,7 +130,7 @@
                                 <field name="signatory_default" placeholder="Ex: Signataire ou Pour l'Entreprise"/>
                             </group>
 
-                            <group string="Ligne de Déduction d'Acompte (Spécifique Bordereau)">
+                            <group string="Ligne de Déduction d'Acompte (Spécifique Bordereau)" invisible="code != 'bordereau_travaux'">
                                 <field name="deduction_label_default"/>
                                 <label for="deduction_rate_default" string="Taux déduction par défaut"/>
                                 <div class="o_row">
@@ -138,6 +138,7 @@
                                     <span>%</span>
                                 </div>
                             </group>
+
 
                             <div class="mt-4 p-3 bg-light border rounded text-center">
                                 <h6 class="text-primary fw-bold mb-2">

@@ -29,10 +29,39 @@ class BtpFactureModele(models.Model):
 
     def _compute_invoice_count(self):
         for rec in self:
-            rec.invoice_count = self.env['account.move'].search_count([('facture_modele_id', '=', rec.id)])
+            if rec.code == 'petit_marche':
+                rec.invoice_count = self.env['btp.petit.marche'].search_count([])
+            elif rec.code == 'grand_marche':
+                rec.invoice_count = self.env['btp.decompte'].search_count([])
+            else:
+                rec.invoice_count = self.env['account.move'].search_count([('facture_modele_id', '=', rec.id)])
 
     def action_create_invoice(self):
         self.ensure_one()
+        if self.code == 'petit_marche':
+            return {
+                'name': _("Nouveau Petit Marché — Facture d'Avance"),
+                'type': 'ir.actions.act_window',
+                'res_model': 'btp.petit.marche',
+                'view_mode': 'form',
+                'views': [(False, 'form')],
+                'target': 'current',
+                'context': {
+                    'default_company_id': self.env.company.id,
+                }
+            }
+        elif self.code == 'grand_marche':
+            return {
+                'name': _("Nouveau Décompte — Grand Marché BTP"),
+                'type': 'ir.actions.act_window',
+                'res_model': 'btp.decompte',
+                'view_mode': 'form',
+                'views': [(False, 'form')],
+                'target': 'current',
+                'context': {
+                    'default_company_id': self.env.company.id,
+                }
+            }
         return {
             'name': _('Nouvelle Facture - %s') % self.name,
             'type': 'ir.actions.act_window',
@@ -54,6 +83,22 @@ class BtpFactureModele(models.Model):
 
     def action_view_invoices(self):
         self.ensure_one()
+        if self.code == 'petit_marche':
+            return {
+                'name': _("Petits Marchés — Factures d'Avance"),
+                'type': 'ir.actions.act_window',
+                'res_model': 'btp.petit.marche',
+                'view_mode': 'tree,form',
+                'target': 'current',
+            }
+        elif self.code == 'grand_marche':
+            return {
+                'name': _("Décomptes Grands Marchés BTP"),
+                'type': 'ir.actions.act_window',
+                'res_model': 'btp.decompte',
+                'view_mode': 'tree,form',
+                'target': 'current',
+            }
         return {
             'name': _('Factures - %s') % self.name,
             'type': 'ir.actions.act_window',
@@ -62,6 +107,7 @@ class BtpFactureModele(models.Model):
             'domain': [('facture_modele_id', '=', self.id)],
             'context': {'default_move_type': 'out_invoice', 'default_facture_modele_id': self.id},
         }
+
 
     @api.model
     def _init_default_models(self):

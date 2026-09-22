@@ -20,12 +20,13 @@
 
             <!-- 2. MASQUER LE BOUTON BORDEREAU ET L'ONGLET BORDEREAU -->
             <xpath expr="//button[@name='action_print_facture_bordereau']" position="attributes">
-                <attribute name="invisible">decompte_id or petit_marche_id or facture_modele_code in ('honoraires_consultant', 'honoraires_etudes', 'decompte_btp', 'decompte_travaux_btp')</attribute>
+                <attribute name="invisible">decompte_id or petit_marche_id or facture_modele_code in ('honoraires_consultant', 'honoraires_etudes', 'decompte_btp', 'decompte_travaux_btp', 'petit_marche', 'grand_marche')</attribute>
             </xpath>
 
             <xpath expr="//page[@name='facture_modele_page']" position="attributes">
-                <attribute name="invisible">decompte_id or petit_marche_id or facture_modele_code in ('honoraires_consultant', 'honoraires_etudes', 'decompte_btp', 'decompte_travaux_btp')</attribute>
+                <attribute name="invisible">decompte_id or petit_marche_id or facture_modele_code in ('honoraires_consultant', 'honoraires_etudes', 'decompte_btp', 'decompte_travaux_btp', 'petit_marche', 'grand_marche')</attribute>
             </xpath>
+
 
             <!-- 3. NOUVEL ONGLET DÉDIÉ : DÉCOMPTE DE TRAVAUX BTP -->
             <xpath expr="//page[@id='invoice_tab']" position="before">
