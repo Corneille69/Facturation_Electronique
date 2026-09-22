@@ -157,16 +157,30 @@ class BtpFactureModele(models.Model):
 
         for m_data in models_data:
             existing = self.search([('code', '=', m_data['code'])], limit=1)
+            vals = {
+                'name': m_data['name'],
+                'sequence': m_data['sequence'],
+                'description': m_data['description'],
+                'city_default': m_data['city_default'],
+                'signatory_default': m_data['signatory_default'],
+            }
+            if m_data.get('image_preview'):
+                vals['image_preview'] = m_data['image_preview']
+            if 'deduction_label_default' in m_data:
+                vals['deduction_label_default'] = m_data['deduction_label_default']
+            if 'deduction_rate_default' in m_data:
+                vals['deduction_rate_default'] = m_data['deduction_rate_default']
+            if 'is_default' in m_data:
+                vals['is_default'] = m_data['is_default']
+
             if existing:
-                # Ne pas écraser l'image si déjà modifiée par l'utilisateur
-                if not existing.image_preview and m_data['image_preview']:
-                    existing.write({'image_preview': m_data['image_preview']})
-                existing.write({
-                    'name': m_data['name'],
-                    'sequence': m_data['sequence'],
-                    'description': m_data['description'],
-                    'city_default': m_data['city_default'],
-                    'signatory_default': m_data['signatory_default'],
-                })
+                existing.write(vals)
             else:
                 self.create(m_data)
+
+        # Rendre les pièces jointes des aperçus publiques pour affichage direct et fluide dans la galerie
+        self.env['ir.attachment'].sudo().search([
+            ('res_model', '=', 'btp.facture.modele'),
+            ('res_field', '=', 'image_preview')
+        ]).write({'public': True})
+
