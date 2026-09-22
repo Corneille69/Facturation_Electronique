@@ -44,6 +44,8 @@ class BtpFactureModele(models.Model):
                 'default_facture_deduction_label': self.deduction_label_default or 'Montant de la facture n°1 perçue de 50%',
                 'default_facture_deduction_rate': self.deduction_rate_default or 50.0,
                 'default_facture_signatory': self.signatory_default or 'Signataire',
+                'default_decompte_btp_city': self.city_default or 'Ouagadougou',
+                'default_decompte_btp_signataire_titre': self.signatory_default or 'Le Bureau',
             }
         }
 
@@ -121,9 +123,18 @@ class BtpFactureModele(models.Model):
                 'signatory_default': 'Le Bureau',
             },
             {
+                'code': 'decompte_btp',
+                'name': 'Décompte BTP',
+                'sequence': 6,
+                'description': 'Facture officielle de décompte BTP avec tableau à 2 colonnes (Désignation / Montant), calcul automatique des formules A à TR, avance 20%, retenue 5%, ARCOP 0,4%, TVA 18% et Net TTC.',
+                'image_preview': load_img('modele_decompte_btp.png'),
+                'city_default': 'Ouagadougou',
+                'signatory_default': 'Le Bureau',
+            },
+            {
                 'code': 'standard',
                 'name': 'Modèle Facture Standard Odoo',
-                'sequence': 6,
+                'sequence': 7,
                 'description': 'Modèle de facturation standard avec lignes d’articles et totaux classiques.',
                 'image_preview': load_img('modele_standard.png'),
                 'city_default': 'Ouagadougou',

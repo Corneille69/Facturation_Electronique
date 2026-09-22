@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Extension de la vue formulaire Facture pour le modèle Décompte BTP -->
+    <record id="view_move_form_inherit_decompte_btp" model="ir.ui.view">
+        <field name="name">account.move.form.inherit.decompte.btp</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="priority">50</field>
+        <field name="arch" type="xml">
+            
+            <!-- 1. BOUTON D'IMPRESSION DANS L'EN-TÊTE -->
+            <xpath expr="//header" position="inside">
+                <button name="action_print_facture_decompte"
+                        string="Imprimer Décompte BTP (PDF)"
+                        type="object"
+                        class="btn-primary fw-bold"
+                        icon="fa-print"
+                        invisible="facture_modele_code != 'decompte_btp'"/>
+            </xpath>
+
+            <!-- 2. MASQUER LE BOUTON BORDEREAU QUAND LE MODÈLE DÉCOMPTE OU HONORAIRES EST ACTIF -->
+            <xpath expr="//button[@name='action_print_facture_bordereau']" position="attributes">
+                <attribute name="invisible">decompte_id or petit_marche_id or facture_modele_code in ('honoraires_consultant', 'honoraires_etudes', 'decompte_btp')</attribute>
+            </xpath>
+
+            <!-- 3. MASQUER L'ONGLET BORDEREAU QUAND LE MODÈLE DÉCOMPTE EST CHOISI -->
+            <xpath expr="//page[@name='facture_modele_page']" position="attributes">
+                <attribute name="invisible">decompte_id or petit_marche_id or facture_modele_code in ('honoraires_consultant', 'honoraires_etudes', 'decompte_btp')</attribute>
+            </xpath>
+
+            <!-- 3. NOUVEL ONGLET DÉDIÉ : DÉCOMPTE BTP (EN TÊTE DU FORMULAIRE) -->
+            <xpath expr="//page[@id='invoice_tab']" position="before">
+                <page string="Décompte BTP" 
+                      name="decompte_btp_page" 
+                      invisible="facture_modele_code != 'decompte_btp'">
+                    
+                    <div class="row">
+                        
+                        <!-- VOLET GAUCHE (4 COLONNES) : SÉLECTION & PRÉVISUALISATION VISUELLE -->
+                        <div class="col-md-4 border-end pe-3">
+                            <div class="alert alert-dark py-2 px-3 mb-3 text-white" style="background-color: #1e3d59;" role="status">
+                                <strong><i class="fa fa-calculator me-1" title="Modèle"/> Modèle Décompte BTP</strong><br/>
+                                <span class="small text-light">Décompte officiel BTP avec calculs automatiques des formules A à TR, TVA 18% et Net TTC.</span>
+                            </div>
+                            
+                            <group>
+                                <field name="facture_modele_id" options="{'no_create': True}" widget="many2one" string="Modèle Choisi"/>
+                            </group>
+
+                            <div class="text-center p-2 bg-light border rounded shadow-sm mt-2">
+                                <field name="facture_modele_image" widget="image" class="img-fluid rounded" style="max-height: 420px; object-fit: contain; width: 100%;" readonly="1"/>
+                            </div>
+                            <div class="text-muted small text-center mt-2 fst-italic">
+                                Rendu visuel officiel du décompte imprimé
+                            </div>
+
+                            <div class="card mt-3 border-0 bg-light shadow-sm">
+                                <div class="card-body p-3">
+                                    <h6 class="text-primary fw-bold mb-2">
+                                        <i class="fa fa-info-circle me-1" title="Guide"/> Guide d'utilisation
+                                    </h6>
+                                    <ol class="small ps-3 mb-0" style="line-height: 1.5;">
+                                        <li>Renseignez le client, l'objet, le <strong>Marché N°</strong> et le <strong>Financement</strong>.</li>
+                                        <li>Saisissez les <strong>4 valeurs clés</strong> :</li>
+                                        <ul>
+                                            <li><strong>(A)</strong> Montant du Marché HTVA</li>
+                                            <li><strong>(B)</strong> Taux d'avancement (TA en %)</li>
+                                            <li><strong>(D)</strong> Montant brut des décomptes précédents</li>
+                                            <li><strong>(F)</strong> Remboursement des avances précédentes</li>
+                                        </ul>
+                                        <li>Toutes les autres lignes <strong>(C, MB, E, G, H, I, TR, Net HTVA, TVA, Net TTC)</strong> se calculent automatiquement en temps réel !</li>
+                                        <li>Cliquez sur <strong>« Imprimer Décompte BTP »</strong> pour générer le PDF officiel.</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- VOLET DROIT (8 COLONNES) : SAISIE, CALCULS AUTOMATIQUES & APERÇU -->
+                        <div class="col-md-8 ps-3">
+                            
+                            <!-- BLOC 1 : INFORMATIONS DU MARCHÉ & EN-TÊTE -->
+                            <div class="card mb-3 border-0 shadow-sm bg-light">
+                                <div class="card-header text-white fw-bold py-2" style="background-color: #17252a;">
+                                    <i class="fa fa-file-text me-2" title="Marché"/> Informations Générales du Marché
+                                </div>
+                                <div class="card-body py-2">
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <span class="small fw-bold text-dark">MARCHE N° :</span>
+                                            <field name="decompte_btp_marche_num" placeholder="Ex: N° 2026-088/MID/SG/DGI"/>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <span class="small fw-bold text-dark">FINANCEMENT :</span>
+                                            <field name="decompte_btp_financement" placeholder="Ex: Budget de l'État (Exercice 2026)"/>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <span class="small fw-bold text-dark">Ville :</span>
+                                            <field name="decompte_btp_city" placeholder="Ex: Ouagadougou"/>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <span class="small fw-bold text-dark">Titre Signataire :</span>
+                                            <field name="decompte_btp_signataire_titre" placeholder="Ex: Le Bureau"/>
+                                        </div>
+                                        <div class="col-12">
+                                            <span class="small fw-bold text-dark">OBJET :</span>
+                                            <field name="decompte_btp_objet" placeholder="Ex: TRAVAUX DE RÉHABILITATION ET BITUMAGE..." rows="2"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- BLOC 2 : CADRE DE SAISIE PRINCIPALE (A, B, D, F) -->
+                            <div class="card mb-3 border-primary shadow-sm">
+                                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-2">
+                                    <span class="fw-bold fs-6">
+                                        <i class="fa fa-edit me-2" title="Saisie"/> Saisie des Paramètres du Décompte
+                                    </span>
+                                    <span class="badge bg-success text-white">Calcul Dynamique en Temps Réel</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-success d-flex align-items-center mb-3 p-3 border-start border-4 border-success" role="status">
+                                        <i class="fa fa-magic fa-2x text-success me-3" title="Calcul automatique"/>
+                                        <div>
+                                            <h6 class="fw-bold text-success mb-1">CALCULS OFFICIELS BTP EN TEMPS RÉEL</h6>
+                                            <span>Renseignez le <strong>Montant du marché (A)</strong>, le <strong>Taux d'avancement (B)</strong> et les <strong>Décomptes précédents (D)</strong> : l'avance, les retenues (source, ARCOP, remboursement), le Net HTVA, la TVA et le Net TTC s'exécutent instantanément !</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="row g-3">
+                                        <!-- CASE A : MONTANT DU MARCHÉ HTVA -->
+                                        <div class="col-md-6">
+                                            <div class="p-3 border border-2 border-primary rounded bg-white h-100 shadow-sm">
+                                                <span class="o_form_label fw-bold text-primary mb-1 d-block">
+                                                    <i class="fa fa-money me-1" title="Marché"/> (A) Montant du marché HTVA :
+                                                </span>
+                                                <field name="decompte_btp_a"
+                                                       widget="monetary"
+                                                       options="{'currency_field': 'currency_id'}"
+                                                       class="fw-bold fs-4 text-primary w-100"
+                                                       placeholder="0.00"/>
+                                                <div class="text-muted small mt-1">MONTANT DU MARCHE EN FCFA HTVA (MHTVA)</div>
+                                            </div>
+                                        </div>
+
+                                        <!-- CASE B : TAUX D'AVANCEMENT (%) -->
+                                        <div class="col-md-6">
+                                            <div class="p-3 border border-2 border-info rounded bg-white h-100 shadow-sm">
+                                                <span class="o_form_label fw-bold text-info mb-1 d-block">
+                                                    <i class="fa fa-percent me-1" title="Taux"/> (B) Taux d'avancement (TA en %) :
+                                                </span>
+                                                <div class="d-flex align-items-center">
+                                                    <field name="decompte_btp_b"
+                                                           class="fw-bold fs-4 text-info w-75"
+                                                           placeholder="0.000000"/>
+                                                    <span class="fs-4 fw-bold text-info ms-2">%</span>
+                                                </div>
+                                                <div class="text-muted small mt-1">Conserve l'intégralité des chiffres après la virgule</div>
+                                            </div>
+                                        </div>
+
+                                        <!-- CASE D : DÉCOMPTES PRÉCÉDENTS -->
+                                        <div class="col-md-6">
+                                            <div class="p-3 border rounded bg-light h-100">
+                                                <span class="o_form_label fw-bold text-dark mb-1 d-block">
+                                                    (D) Montant brut décomptes précédents :
+                                                </span>
+                                                <field name="decompte_btp_d"
+                                                       widget="monetary"
+                                                       options="{'currency_field': 'currency_id'}"
+                                                       class="fw-bold fs-5 text-dark w-100"
+                                                       placeholder="0.00"/>
+                                                <div class="text-muted small mt-1">MONTANT BRUT HTVA DES DECOMPTES PRECEDENTS</div>
+                                            </div>
+                                        </div>
+
+                                        <!-- CASE F : REMBOURSEMENT AVANCES PRÉCÉDENTES -->
+                                        <div class="col-md-6">
+                                            <div class="p-3 border rounded bg-light h-100">
+                                                <span class="o_form_label fw-bold text-dark mb-1 d-block">
+                                                    (F) Remboursement des avances précédentes :
+                                                </span>
+                                                <field name="decompte_btp_f"
+                                                       widget="monetary"
+                                                       options="{'currency_field': 'currency_id'}"
+                                                       class="fw-bold fs-5 text-dark w-100"
+                                                       placeholder="0.00"/>
+                                                <div class="text-muted small mt-1">REMBOURSEMENT DES AVANCES PRECEDENTES</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- BLOC 3 : RÉCAPITULATIF DES LIGNES CALCULÉES AUTOMATIQUEMENT -->
+                            <div class="card mb-3 border-dark shadow-sm">
+                                <div class="card-header bg-dark text-white fw-bold py-2">
+                                    <i class="fa fa-list-alt me-2" title="Lignes"/> Tableau Officiel des Résultats Calculés
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-2">
+                                        <!-- C : Montant HTVA Présent Décompte -->
+                                        <div class="col-md-6">
+                                            <div class="p-2 border rounded bg-light">
+                                                <small class="text-muted d-block fw-bold">(C) = (TA) x (MHTVA) :</small>
+                                                <field name="decompte_btp_c" widget="monetary" options="{'currency_field': 'currency_id'}" class="fw-bold text-dark"/>
+                                            </div>
+                                        </div>
+                                        <!-- MB : Montant Brut Présent Décompte -->
+                                        <div class="col-md-6">
+                                            <div class="p-2 border rounded bg-light">
+                                                <small class="text-primary d-block fw-bold">(MB) = (C) - (D) [Montant Brut Décompte] :</small>
+                                                <field name="decompte_btp_mb" widget="monetary" options="{'currency_field': 'currency_id'}" class="fw-bold fs-6 text-primary"/>
+                                            </div>
+                                        </div>
+                                        <!-- E : Avance de démarrage 20% -->
+                                        <div class="col-md-6">
+                                            <div class="p-2 border rounded bg-light">
+                                                <small class="text-muted d-block">(E) Avance de démarrage perçue (A x 20%) :</small>
+                                                <field name="decompte_btp_e" widget="monetary" options="{'currency_field': 'currency_id'}" class="fw-bold text-dark"/>
+                                            </div>
+                                        </div>
+                                        <!-- G : Remboursement avance présent décompte -->
+                                        <div class="col-md-6">
+                                            <div class="p-2 border rounded bg-light">
+                                                <small class="text-danger d-block fw-bold">(G) Remboursement avance [E x (B-20)/(80-20)] :</small>
+                                                <field name="decompte_btp_g" widget="monetary" options="{'currency_field': 'currency_id'}" class="fw-bold text-danger"/>
+                                            </div>
+                                        </div>
+                                        <!-- H : Retenue source 5% -->
+                                        <div class="col-md-6">
+                                            <div class="p-2 border rounded bg-light">
+                                                <small class="text-danger d-block fw-bold">(H) Retenue à la source (MB x 5%) :</small>
+                                                <field name="decompte_btp_h" widget="monetary" options="{'currency_field': 'currency_id'}" class="fw-bold text-danger"/>
+                                            </div>
+                                        </div>
+                                        <!-- I : Retenue ARCOP 0.4% -->
+                                        <div class="col-md-6">
+                                            <div class="p-2 border rounded bg-light">
+                                                <small class="text-danger d-block fw-bold">(I) Retenue ARCOP (A x 0,4%) :</small>
+                                                <field name="decompte_btp_i" widget="monetary" options="{'currency_field': 'currency_id'}" class="fw-bold text-danger"/>
+                                            </div>
+                                        </div>
+                                        <!-- TR : Total Retenues -->
+                                        <div class="col-md-12">
+                                            <div class="p-2 border border-danger rounded bg-white">
+                                                <small class="text-danger d-block fw-bold">(TR) TOTAL RETENUES = (G + H + I) :</small>
+                                                <field name="decompte_btp_tr" widget="monetary" options="{'currency_field': 'currency_id'}" class="fw-bold fs-5 text-danger"/>
+                                            </div>
+                                        </div>
+                                        <!-- Net HTVA -->
+                                        <div class="col-md-4 mt-2">
+                                            <div class="p-2 border border-2 border-primary rounded bg-white shadow-sm">
+                                                <small class="text-primary d-block fw-bold">MONTANT NET DECOMPTE (HTVA) :</small>
+                                                <field name="decompte_btp_net_htva" widget="monetary" options="{'currency_field': 'currency_id'}" class="fw-bold fs-5 text-primary"/>
+                                            </div>
+                                        </div>
+                                        <!-- TVA 18% -->
+                                        <div class="col-md-4 mt-2">
+                                            <div class="p-2 border border-2 border-secondary rounded bg-white shadow-sm">
+                                                <small class="text-secondary d-block fw-bold">TVA 18% :</small>
+                                                <field name="decompte_btp_tva" widget="monetary" options="{'currency_field': 'currency_id'}" class="fw-bold fs-5 text-secondary"/>
+                                            </div>
+                                        </div>
+                                        <!-- Net TTC -->
+                                        <div class="col-md-4 mt-2">
+                                            <div class="p-2 border border-2 border-success rounded bg-success text-white shadow-sm">
+                                                <small class="text-white d-block fw-bold">MONTANT NET DECOMPTE (TTC) :</small>
+                                                <field name="decompte_btp_net_ttc" widget="monetary" options="{'currency_field': 'currency_id'}" class="fw-bold fs-4 text-white"/>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Arrêté en toutes lettres -->
+                                    <div class="p-2 mt-3 bg-light border rounded text-dark">
+                                        <span class="fw-bold"><i class="fa fa-font me-1" title="Lettres"/> Arrêté la présente facture à la somme de : </span>
+                                        <field name="decompte_btp_net_lettres" class="fw-bold text-uppercase text-primary"/>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- BLOC 4 : APERÇU DIRECT DU DÉCOMPTE IMPRIMÉ -->
+                            <div class="mt-3">
+                                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                                    <h6 class="text-dark fw-bold mb-0">
+                                        <i class="fa fa-eye me-1" title="Aperçu"/> Aperçu Direct du Document Tel Qu'Imprimé
+                                    </h6>
+                                    <button name="action_print_facture_decompte" 
+                                            string="Imprimer Décompte (PDF)" 
+                                            type="object" 
+                                            class="btn btn-sm btn-primary fw-bold" 
+                                            icon="fa-print"/>
+                                </div>
+                                <field name="decompte_btp_preview_html" widget="html" readonly="1" nolabel="1"/>
+                            </div>
+
+                        </div>
+                    </div>
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+</odoo>
