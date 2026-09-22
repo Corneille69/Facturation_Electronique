@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import base64
 import os
+# pyrefly: ignore [missing-import]
 from odoo import models, fields, api, _
 
 class BtpFactureModele(models.Model):
@@ -142,16 +143,17 @@ class BtpFactureModele(models.Model):
                 'city_default': 'Ouagadougou',
                 'signatory_default': 'Le Bureau',
             },
-            {
-                'code': 'standard',
-                'name': 'Modèle Facture Standard Odoo',
-                'sequence': 8,
-                'description': 'Modèle de facturation standard avec lignes d’articles et totaux classiques.',
-                'image_preview': load_img('modele_standard.png'),
-                'city_default': 'Ouagadougou',
-                'signatory_default': 'La Direction',
-            },
         ]
+
+        # Suppression des modèles indésirables ou de test de la galerie
+        unwanted = self.search([
+            '|', '|',
+            ('code', 'in', ['standard', 'fjbi']),
+            ('name', 'ilike', 'esrtdyfugi%'),
+            ('name', 'ilike', '%Standard%')
+        ])
+        if unwanted:
+            unwanted.unlink()
 
         for m_data in models_data:
             existing = self.search([('code', '=', m_data['code'])], limit=1)

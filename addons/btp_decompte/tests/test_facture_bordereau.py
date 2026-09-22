@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 import os
+# pyrefly: ignore [missing-import]
 import odoo
+# pyrefly: ignore [missing-import]
 from odoo import api, fields
+# pyrefly: ignore [missing-import]
 from odoo.tests.common import TransactionCase
 
 def run_test():
